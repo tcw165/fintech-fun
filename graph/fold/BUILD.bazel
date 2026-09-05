@@ -1,0 +1,20 @@
+# Query over graph models. Child of //graph. Tests may depend on //graph/examples.
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "fold",
+    srcs = ["fold.go"],
+    importpath = "github.com/tcw165/fintech-fun/graph/fold",
+    visibility = ["//visibility:public"],
+    deps = ["//graph:graph"],
+)
+
+go_test(
+    name = "fold_test",
+    srcs = ["fold_test.go"],
+    embed = [":fold"],
+    deps = [
+        "//graph:graph",
+        "//graph/examples:examples",
+    ],
+)
