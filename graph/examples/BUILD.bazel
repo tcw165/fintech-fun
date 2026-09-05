@@ -1,0 +1,10 @@
+# Fixtures: Notion examples as data. Child of //graph.
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "examples",
+    srcs = ["examples.go"],
+    importpath = "github.com/tcw165/fintech-fun/graph/examples",
+    visibility = ["//visibility:public"],
+    deps = ["//graph:graph"],
+)
