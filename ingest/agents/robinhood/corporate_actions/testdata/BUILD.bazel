@@ -1,0 +1,12 @@
+# Fixture text. Pure data.
+load("@rules_go//go:def.bzl", "go_library")
+
+exports_files(["tracker_sept_2026.txt"])
+
+go_library(
+    name = "testdata",
+    srcs = ["fixture.go"],
+    embedsrcs = ["tracker_sept_2026.txt"],
+    importpath = "github.com/tcw165/fintech-fun/ingest/agents/robinhood/corporate_actions/testdata",
+    visibility = ["//visibility:public"],
+)

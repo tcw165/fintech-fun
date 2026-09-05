@@ -1,0 +1,20 @@
+# Parser. Child of //ingest/agents/robinhood/corporate_actions (models).
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "parser",
+    srcs = ["parser.go"],
+    importpath = "github.com/tcw165/fintech-fun/ingest/agents/robinhood/corporate_actions/parser",
+    visibility = ["//visibility:public"],
+    deps = ["//ingest/agents/robinhood/corporate_actions:corporate_actions"],
+)
+
+go_test(
+    name = "parser_test",
+    srcs = ["parser_test.go"],
+    embed = [":parser"],
+    deps = [
+        "//ingest/agents/robinhood/corporate_actions/testdata:testdata",
+        "//graph:graph",
+    ],
+)
