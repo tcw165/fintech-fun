@@ -1,0 +1,21 @@
+"""Bazel module: fintech_fun (Python 3.12 + rules_python)."""
+
+module(
+    name = "fintech_fun",
+    version = "0.0.0",
+)
+
+bazel_dep(name = "rules_python", version = "1.4.1")
+
+PYTHON_VERSION = "3.12"
+
+python = use_extension("@rules_python//python/extensions:python.bzl", "python")
+python.toolchain(python_version = PYTHON_VERSION)
+
+pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
+pip.parse(
+    hub_name = "pip",
+    python_version = PYTHON_VERSION,
+    requirements_lock = "//:requirements_lock.txt",
+)
+use_repo(pip, "pip")
