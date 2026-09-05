@@ -9,3 +9,18 @@ type TrackerRow struct {
 	Company  string
 	Ticker   string
 }
+
+type ClassifiedEvent struct {
+	Date            time.Time
+	Kind            string
+	Headline        string
+	Company         string
+	Ticker          string
+	ShareMultiplier float64
+	CashPerShare    float64
+	KeepFractionals bool
+	CanTrade        bool
+	YouNowHold      string
+	NewName         string
+	Skip            bool
+}

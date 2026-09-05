@@ -1,4 +1,4 @@
-# Models: TrackerRow (and later ClassifiedEvent). Pure data.
+# Models: TrackerRow, ClassifiedEvent. Pure data.
 # Children: parser, classify, ingest. This module does not import them.
 load("@rules_go//go:def.bzl", "go_library")
 
