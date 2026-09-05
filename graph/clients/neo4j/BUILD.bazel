@@ -1,0 +1,22 @@
+# Contract: Neo4j Client + Cypher. Pure protocol. No driver.
+# Implementation lives in //graph/clients/neo4j/impl (child → this parent).
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "neo4j",
+    srcs = [
+        "contract.go",
+        "cypher.go",
+        "write.go",
+    ],
+    importpath = "github.com/tcw165/fintech-fun/graph/clients/neo4j",
+    visibility = ["//visibility:public"],
+    deps = ["//graph:graph"],
+)
+
+go_test(
+    name = "neo4j_test",
+    srcs = ["write_test.go"],
+    embed = [":neo4j"],
+    deps = ["//graph/examples:examples"],
+)
