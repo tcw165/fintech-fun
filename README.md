@@ -40,5 +40,33 @@ Stop without deleting data: `docker compose -f infra/docker-compose.yml down`. W
 - Client interfaces and implementations live in different modules.
 - Dependencies point child → parent. Parents never import children.
 
-`//graph` is the first model module: Company, Stock, Event. No store clients.
+```
+//graph                                                 models: Company, Stock, Event
+//graph/examples                                        fixtures → graph
+//graph/fold                                            query → graph
+//graph/clients/neo4j                                   contract: Client + Cypher (no driver)
+//graph/clients/neo4j/impl                              impl → neo4j
+//graph/clients/qdrant                                  contract: Client + collection protocol (no HTTP)
+//graph/clients/qdrant/impl                             impl → qdrant
+//ingest/agents/robinhood/corporate_actions             models: hood_events (TrackerRow, ClassifiedEvent)
+//ingest/agents/robinhood/corporate_actions/testdata    fixture → models
+//ingest/agents/robinhood/corporate_actions/parser      child → models
+//ingest/agents/robinhood/corporate_actions/classify    child → models
+//ingest/agents/robinhood/corporate_actions/ingest      child → models + graph contracts
+//ingest/agents/robinhood/corporate_actions/crawler     CLI → parser, classify, ingest
+```
 
+Retail graph tests (no live Docker):
+
+```bash
+bazel test //graph:schema_test //graph/fold:fold_test //graph/clients/neo4j:neo4j_test //graph/clients/qdrant:qdrant_test
+bazel test //ingest/agents/robinhood/corporate_actions/parser:parser_test //ingest/agents/robinhood/corporate_actions/classify:classify_test //ingest/agents/robinhood/corporate_actions/ingest:ingest_test
+```
+
+The crawler reads [Robinhood Corporate Actions Tracker](https://robinhood.com/us/en/support/articles/corporate-actions-tracker/) text day by day, classifies each row into `Event.kind`, and previews Neo4j/Qdrant writes:
+
+```bash
+bazel run //ingest/agents/robinhood/corporate_actions/crawler -- parse "$PWD/ingest/agents/robinhood/corporate_actions/testdata/tracker_sept_2026.txt"
+bazel run //ingest/agents/robinhood/corporate_actions/crawler -- classify 2026-09-03 'Apogee Therapeutics, Inc. (APGE) performed a cash merger.'
+bazel run //ingest/agents/robinhood/corporate_actions/crawler -- plan "$PWD/ingest/agents/robinhood/corporate_actions/testdata/tracker_sept_2026.txt"
+```
