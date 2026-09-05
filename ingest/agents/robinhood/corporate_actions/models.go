@@ -3,6 +3,8 @@ package hood_events
 
 import "time"
 
+const TrackerURL = "https://robinhood.com/us/en/support/articles/corporate-actions-tracker/"
+
 type TrackerRow struct {
 	Date     time.Time
 	Headline string
