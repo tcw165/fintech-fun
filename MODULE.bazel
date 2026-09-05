@@ -1,11 +1,16 @@
-"""Bazel module: fintech_fun (Python 3.12 + rules_python)."""
+"""Bazel module: fintech_fun (Go + Python 3.12)."""
 
 module(
     name = "fintech_fun",
     version = "0.0.0",
 )
 
+bazel_dep(name = "rules_go", version = "0.55.1")
+bazel_dep(name = "gazelle", version = "0.43.0")
 bazel_dep(name = "rules_python", version = "1.4.1")
+
+go_sdk = use_extension("@rules_go//go:extensions.bzl", "go_sdk")
+go_sdk.download(version = "1.24.4")
 
 PYTHON_VERSION = "3.12"
 
