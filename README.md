@@ -34,3 +34,11 @@ docker compose -f infra/docker-compose.yml ps
 
 Stop without deleting data: `docker compose -f infra/docker-compose.yml down`. Wipe volumes: add `-v`.
 
+## Go layout
+
+- Models and contracts are their own Bazel modules (pure data or protocol).
+- Client interfaces and implementations live in different modules.
+- Dependencies point child → parent. Parents never import children.
+
+`//graph` is the first model module: Company, Stock, Event. No store clients.
+

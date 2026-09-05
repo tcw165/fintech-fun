@@ -1,0 +1,16 @@
+# Models: Company, Stock, Event. Pure data. Children depend on this; this module
+# does not import clients or other graph children.
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "graph",
+    srcs = ["schema.go"],
+    importpath = "github.com/tcw165/fintech-fun/graph",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "schema_test",
+    srcs = ["schema_test.go"],
+    embed = [":graph"],
+)
