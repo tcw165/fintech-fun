@@ -1,0 +1,10 @@
+# Models: TrackerRow (and later ClassifiedEvent). Pure data.
+# Children: parser, classify, ingest. This module does not import them.
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "corporate_actions",
+    srcs = ["models.go"],
+    importpath = "github.com/tcw165/fintech-fun/ingest/agents/robinhood/corporate_actions",
+    visibility = ["//visibility:public"],
+)
