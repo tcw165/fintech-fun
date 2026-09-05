@@ -1,0 +1,10 @@
+# Client implementation. Depends on //graph/clients/qdrant (parent contract).
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "impl",
+    srcs = ["client.go"],
+    importpath = "github.com/tcw165/fintech-fun/graph/clients/qdrant/impl",
+    visibility = ["//visibility:public"],
+    deps = ["//graph/clients/qdrant:qdrant"],
+)

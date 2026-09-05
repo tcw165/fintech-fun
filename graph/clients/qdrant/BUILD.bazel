@@ -1,0 +1,21 @@
+# Contract: Qdrant Client + collection/point protocol. No HTTP client.
+# Implementation lives in //graph/clients/qdrant/impl (child → this parent).
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "qdrant",
+    srcs = [
+        "contract.go",
+        "protocol.go",
+    ],
+    importpath = "github.com/tcw165/fintech-fun/graph/clients/qdrant",
+    visibility = ["//visibility:public"],
+    deps = ["//graph:graph"],
+)
+
+go_test(
+    name = "qdrant_test",
+    srcs = ["protocol_test.go"],
+    embed = [":qdrant"],
+    deps = ["//graph/examples:examples"],
+)
