@@ -1,4 +1,8 @@
+load("@gazelle//:def.bzl", "gazelle")
 load("@rules_python//python:pip.bzl", "compile_pip_requirements")
+
+# gazelle:prefix github.com/tcw165/fintech-fun
+gazelle(name = "gazelle")
 
 compile_pip_requirements(
     name = "requirements",
