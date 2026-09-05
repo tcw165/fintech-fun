@@ -1,0 +1,30 @@
+# Ingest orchestration. Child of models; uses graph contracts + sibling parser/classify.
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "ingest",
+    srcs = ["ingest.go"],
+    importpath = "github.com/tcw165/fintech-fun/ingest/agents/robinhood/corporate_actions/ingest",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//graph:graph",
+        "//graph/clients/neo4j:neo4j",
+        "//graph/clients/qdrant:qdrant",
+        "//ingest/agents/robinhood/corporate_actions:corporate_actions",
+        "//ingest/agents/robinhood/corporate_actions/classify:classify",
+        "//ingest/agents/robinhood/corporate_actions/parser:parser",
+    ],
+)
+
+go_test(
+    name = "ingest_test",
+    srcs = ["ingest_test.go"],
+    embed = [":ingest"],
+    deps = [
+        "//graph:graph",
+        "//graph/clients/neo4j/impl:impl",
+        "//graph/clients/qdrant/impl:impl",
+        "//ingest/agents/robinhood/corporate_actions:corporate_actions",
+        "//ingest/agents/robinhood/corporate_actions/testdata:testdata",
+    ],
+)
