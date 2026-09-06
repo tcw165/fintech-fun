@@ -19,7 +19,29 @@ just k9s      # attach to context fintech-fun
 just down     # stop the VM
 ```
 
-`just` lists every recipe. `just cluster-start` / `cluster-images` / `cluster-apply` are the three steps inside `up` if you want them one at a time.
+`just` lists every recipe. `just cluster-start` / `cluster-images` / `cluster-apply` / `just wait` are the steps inside `up` if you want them one at a time.
+
+## Gap A (local minikube proof)
+
+Activation product code is merged. This checklist proves it on a live local cluster:
+
+```bash
+just deps
+just up          # start profile, load images, apply overlay, wait for Ready
+just healthz
+just ping        # Bolt + Qdrant on NodePorts :30687 / :30333
+just seed        # Notion fixtures (gold path)
+just verify      # memory gold + live Bolt gold (nflx…ftel)
+just smoke       # /fold /search /v1/graph
+just gold        # HTTP fold rows match the Notion tables
+just gap-a       # wait + healthz + ping + seed + verify + smoke + gold
+```
+
+The corporate-actions CronJob stays **suspended**. `just refresh` is the manual refresh path. Unsuspend only after Robinhood is reachable:
+
+```bash
+just egress && just unsuspend
+```
 
 | Service | In-cluster | NodePort (local overlay) | Auth |
 | --- | --- | --- | --- |

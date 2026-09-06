@@ -28,8 +28,10 @@ truth for the tool list. Empty args run `ingest`.
 2. `parse` rows, then `classify` each headline into an Event.kind.
 3. `ingest` (or `refresh`) MERGEs Company/Stock/Event and upserts headlines
    in Qdrant. Re-runs must skip work already done for the same page or Event id.
-4. `verify` against the Notion gold fold tables. `fold` answers the account
-   screen. `search` ranks Event.headline.
+4. `verify` against the Notion gold fold tables (memory plus live Bolt when
+   clients are injected). `fold` answers the account screen. `search` ranks
+   Event.headline. On a local minikube cluster, `just gap-a` runs wait,
+   healthz, ping, seed, verify, HTTP smoke, and HTTP gold.
 
 ## Waiting policy
 
