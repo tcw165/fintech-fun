@@ -1,0 +1,42 @@
+package skill
+
+import (
+	"context"
+	"testing"
+
+	"github.com/tcw165/fintech-fun/agents/harness/contract"
+	neo4jimpl "github.com/tcw165/fintech-fun/graph/clients/neo4j/impl"
+	qdrantimpl "github.com/tcw165/fintech-fun/graph/clients/qdrant/impl"
+)
+
+func TestPingUsesInjectedClients(t *testing.T) {
+	graph := &neo4jimpl.Recording{}
+	vectors := &qdrantimpl.Recording{}
+	result, err := Skill{Graph: graph, Vectors: vectors}.Run(context.Background(), contract.Request{Args: []string{"ping"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	payload := result.Payload.(map[string]any)
+	if payload["status"] != "ok" || payload["event_id"] != "NFLX|2025-11-17|split" {
+		t.Fatalf("%v", payload)
+	}
+	if len(graph.Calls) == 0 || len(vectors.Collections) != 1 || vectors.Upserts != 1 {
+		t.Fatalf("graph=%d collections=%v upserts=%d", len(graph.Calls), vectors.Collections, vectors.Upserts)
+	}
+	foundRead := false
+	for _, call := range graph.Calls {
+		if call.Params["id"] == "NFLX|2025-11-17|split" && call.Cypher != "" {
+			foundRead = true
+		}
+	}
+	if !foundRead {
+		t.Fatalf("%+v", graph.Calls)
+	}
+}
+
+func TestPingRequiresClients(t *testing.T) {
+	_, err := Skill{}.Run(context.Background(), contract.Request{Args: []string{"ping"}})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}

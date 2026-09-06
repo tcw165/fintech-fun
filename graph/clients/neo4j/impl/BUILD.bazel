@@ -1,10 +1,23 @@
 # Client implementation. Depends on //graph/clients/neo4j (parent contract).
-load("@rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "impl",
-    srcs = ["client.go"],
+    srcs = [
+        "client.go",
+        "driver.go",
+    ],
     importpath = "github.com/tcw165/fintech-fun/graph/clients/neo4j/impl",
     visibility = ["//visibility:public"],
+    deps = [
+        "//graph/clients/neo4j:neo4j",
+        "@com_github_neo4j_neo4j_go_driver_v5//neo4j",
+    ],
+)
+
+go_test(
+    name = "impl_test",
+    srcs = ["driver_test.go"],
+    embed = [":impl"],
     deps = ["//graph/clients/neo4j:neo4j"],
 )

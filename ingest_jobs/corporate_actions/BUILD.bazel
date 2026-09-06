@@ -9,5 +9,7 @@ go_binary(
         "//agents/harness/contract",
         "//agents/harness/impl",
         "//agents/skills/ingest/robinhood/corporate_actions/skill",
+        "//graph/clients/neo4j/impl:impl",
+        "//graph/clients/qdrant/impl:impl",
     ],
 )

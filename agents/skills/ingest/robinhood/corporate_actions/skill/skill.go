@@ -11,17 +11,24 @@ import (
 	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/classify"
 	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/ingest"
 	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/parser"
+	"github.com/tcw165/fintech-fun/graph/clients/neo4j"
+	"github.com/tcw165/fintech-fun/graph/clients/qdrant"
+	"github.com/tcw165/fintech-fun/graph/examples"
 )
 
 const name = "ingest/robinhood/corporate_actions"
 
-type Skill struct{}
+// Skill is the ingest facade. Graph and Vectors are injected by the job binary.
+type Skill struct {
+	Graph   neo4j.Client
+	Vectors qdrant.Client
+}
 
 func (Skill) Name() string { return name }
 
-func (Skill) Run(ctx context.Context, req contract.Request) (contract.Result, error) {
+func (s Skill) Run(ctx context.Context, req contract.Request) (contract.Result, error) {
 	if len(req.Args) < 1 {
-		return contract.Result{}, fmt.Errorf("usage:\n  corporate_actions parse <file>\n  corporate_actions classify <YYYY-MM-DD> <headline> [company] [ticker]\n  corporate_actions plan <file>\n\nsource: %s", hood_events.TrackerURL)
+		return contract.Result{}, fmt.Errorf("usage:\n  corporate_actions parse <file>\n  corporate_actions classify <YYYY-MM-DD> <headline> [company] [ticker]\n  corporate_actions plan <file>\n  corporate_actions ping\n\nsource: %s", hood_events.TrackerURL)
 	}
 	var (
 		out any
@@ -34,6 +41,8 @@ func (Skill) Run(ctx context.Context, req contract.Request) (contract.Result, er
 		out, err = runClassify(req.Args)
 	case "plan":
 		out, err = runPlan(req.Args)
+	case "ping":
+		out, err = s.runPing()
 	default:
 		return contract.Result{}, fmt.Errorf("unknown command %q", req.Args[0])
 	}
@@ -41,6 +50,39 @@ func (Skill) Run(ctx context.Context, req contract.Request) (contract.Result, er
 		return contract.Result{}, err
 	}
 	return contract.Result{Payload: out}, nil
+}
+
+func (s Skill) runPing() (any, error) {
+	if s.Graph == nil || s.Vectors == nil {
+		return nil, fmt.Errorf("ping requires injected Neo4j and Qdrant clients")
+	}
+	if err := neo4j.ApplyConstraints(s.Graph); err != nil {
+		return nil, err
+	}
+	if _, err := qdrant.EnsureCollection(s.Vectors); err != nil {
+		return nil, err
+	}
+	company, stock, events := examples.NFLX()
+	if _, err := neo4j.IngestGraph(s.Graph, company, stock, events); err != nil {
+		return nil, err
+	}
+	if _, err := qdrant.UpsertEvents(s.Vectors, events, nil); err != nil {
+		return nil, err
+	}
+	rows, err := s.Graph.Run(
+		"MATCH (e:Event {id: $id}) RETURN e.headline AS headline, e.kind AS kind",
+		map[string]any{"id": events[0].ID()},
+	)
+	if err != nil {
+		return nil, err
+	}
+	return map[string]any{
+		"status":      "ok",
+		"constraints": len(neo4j.Constraints),
+		"collection":  qdrant.Collection,
+		"event_id":    events[0].ID(),
+		"read":        rows,
+	}, nil
 }
 
 func runParse(args []string) (any, error) {

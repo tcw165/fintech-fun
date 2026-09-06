@@ -1,5 +1,6 @@
 # Skill facade. Child of harness contract + parser/classify/ingest.
-load("@rules_go//go:def.bzl", "go_library")
+# Graph/Qdrant contracts only — official drivers are wired in the job binary.
+load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "skill",
@@ -12,5 +13,19 @@ go_library(
         "//agents/skills/ingest/robinhood/corporate_actions/classify:classify",
         "//agents/skills/ingest/robinhood/corporate_actions/ingest:ingest",
         "//agents/skills/ingest/robinhood/corporate_actions/parser:parser",
+        "//graph/clients/neo4j:neo4j",
+        "//graph/clients/qdrant:qdrant",
+        "//graph/examples:examples",
+    ],
+)
+
+go_test(
+    name = "skill_test",
+    srcs = ["skill_test.go"],
+    embed = [":skill"],
+    deps = [
+        "//agents/harness/contract",
+        "//graph/clients/neo4j/impl:impl",
+        "//graph/clients/qdrant/impl:impl",
     ],
 )
