@@ -1,0 +1,17 @@
+# HTTP server. Child of //api_server/contract.
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "impl",
+    srcs = ["server.go"],
+    importpath = "github.com/tcw165/fintech-fun/api_server/impl",
+    visibility = ["//visibility:public"],
+    deps = ["//api_server/contract"],
+)
+
+go_test(
+    name = "impl_test",
+    srcs = ["server_test.go"],
+    embed = [":impl"],
+    deps = ["//api_server/contract"],
+)

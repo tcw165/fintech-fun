@@ -1,0 +1,9 @@
+# API process entrypoint. Wires impl (DI).
+load("@rules_go//go:def.bzl", "go_binary")
+
+go_binary(
+    name = "api_server",
+    srcs = ["main.go"],
+    visibility = ["//visibility:public"],
+    deps = ["//api_server/impl"],
+)
