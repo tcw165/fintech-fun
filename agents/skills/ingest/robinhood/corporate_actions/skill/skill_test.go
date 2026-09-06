@@ -107,6 +107,18 @@ func TestVerifyMatchesNotionTables(t *testing.T) {
 	}
 }
 
+func TestVerifyIncludesBoltWhenGraphSet(t *testing.T) {
+	graph := &neo4jimpl.Recording{}
+	result, err := Skill{Graph: graph}.Run(context.Background(), contract.Request{Args: []string{"verify"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	payload := result.Payload.(map[string]any)
+	if payload["bolt"] == nil || len(graph.Calls) == 0 {
+		t.Fatalf("%v calls=%d", payload, len(graph.Calls))
+	}
+}
+
 func TestPingRequiresClients(t *testing.T) {
 	_, err := Skill{}.Run(context.Background(), contract.Request{Args: []string{"ping"}})
 	if err == nil {
