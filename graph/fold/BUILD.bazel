@@ -5,6 +5,7 @@ go_library(
     name = "fold",
     srcs = [
         "fold.go",
+        "match.go",
         "verify.go",
     ],
     importpath = "github.com/tcw165/fintech-fun/graph/fold",
@@ -19,6 +20,7 @@ go_test(
     name = "fold_test",
     srcs = [
         "fold_test.go",
+        "match_test.go",
         "verify_test.go",
     ],
     embed = [":fold"],
