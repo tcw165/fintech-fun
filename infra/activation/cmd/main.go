@@ -13,7 +13,7 @@ import (
 
 func main() {
 	if len(os.Args) < 3 {
-		fmt.Fprintln(os.Stderr, "usage: activation healthz|smoke <api-base-url>")
+		fmt.Fprintln(os.Stderr, "usage: activation healthz|smoke|gold <api-base-url>")
 		os.Exit(2)
 	}
 	cmd, api := os.Args[1], strings.TrimRight(os.Args[2], "/")
@@ -29,6 +29,12 @@ func main() {
 		}
 	case contract.StepSmoke:
 		report := checker.Smoke(api)
+		_ = enc.Encode(report)
+		if !report.AllOK() {
+			os.Exit(2)
+		}
+	case contract.StepGold:
+		report := checker.Gold(api)
 		_ = enc.Encode(report)
 		if !report.AllOK() {
 			os.Exit(2)

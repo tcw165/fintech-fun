@@ -6,7 +6,10 @@ go_library(
     srcs = ["http.go"],
     importpath = "github.com/tcw165/fintech-fun/infra/activation/impl",
     visibility = ["//visibility:public"],
-    deps = ["//infra/activation/contract"],
+    deps = [
+        "//graph/fold:fold",
+        "//infra/activation/contract",
+    ],
 )
 
 go_test(
