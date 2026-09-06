@@ -3,9 +3,9 @@ package classify
 import (
 	"testing"
 
-	"github.com/tcw165/fintech-fun/ingest/agents/robinhood/corporate_actions"
-	"github.com/tcw165/fintech-fun/ingest/agents/robinhood/corporate_actions/parser"
-	"github.com/tcw165/fintech-fun/ingest/agents/robinhood/corporate_actions/testdata"
+	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions"
+	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/parser"
+	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/testdata"
 	"github.com/tcw165/fintech-fun/graph"
 )
 

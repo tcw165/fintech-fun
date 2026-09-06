@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tcw165/fintech-fun/ingest/agents/robinhood/corporate_actions"
+	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions"
 )
 
 const tickerPat = `[A-Z0-9]+(?:\.[A-Z0-9]+)?\^?`

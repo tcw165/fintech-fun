@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/tcw165/fintech-fun/ingest/agents/robinhood/corporate_actions"
-	"github.com/tcw165/fintech-fun/ingest/agents/robinhood/corporate_actions/classify"
-	"github.com/tcw165/fintech-fun/ingest/agents/robinhood/corporate_actions/ingest"
-	"github.com/tcw165/fintech-fun/ingest/agents/robinhood/corporate_actions/parser"
+	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions"
+	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/classify"
+	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/ingest"
+	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/parser"
 )
 
 func main() {

@@ -1,0 +1,16 @@
+# Skill facade. Child of harness contract + parser/classify/ingest.
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "skill",
+    srcs = ["skill.go"],
+    importpath = "github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/skill",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//agents/harness/contract",
+        "//agents/skills/ingest/robinhood/corporate_actions:corporate_actions",
+        "//agents/skills/ingest/robinhood/corporate_actions/classify:classify",
+        "//agents/skills/ingest/robinhood/corporate_actions/ingest:ingest",
+        "//agents/skills/ingest/robinhood/corporate_actions/parser:parser",
+    ],
+)
