@@ -88,6 +88,11 @@ healthz:
     curl -sS "$(minikube service -p {{profile}} -n {{ns}} api-server --url)/healthz"
     @echo
 
+# Account-screen fold through minikube. Example: just fold square 10
+fold q qty:
+    curl -sS "$(minikube service -p {{profile}} -n {{ns}} api-server --url)/fold?q={{q}}&qty={{qty}}"
+    @echo
+
 # Open k9s on this cluster in the fintech-fun namespace.
 k9s:
     k9s --context {{profile}} --namespace {{ns}}

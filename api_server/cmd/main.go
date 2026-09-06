@@ -2,12 +2,15 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 
+	"github.com/tcw165/fintech-fun/api_server/contract"
 	"github.com/tcw165/fintech-fun/api_server/impl"
+	neo4jimpl "github.com/tcw165/fintech-fun/graph/clients/neo4j/impl"
 )
 
 func main() {
@@ -15,8 +18,15 @@ func main() {
 	if v := os.Getenv("PORT"); v != "" {
 		addr = ":" + v
 	}
+	var folder contract.Folder
+	if driver, err := neo4jimpl.OpenFromEnv(); err != nil {
+		log.Printf("neo4j unavailable: %v", err)
+	} else {
+		defer driver.Close(context.Background())
+		folder = impl.Neo4jFold{Graph: driver}
+	}
 	log.Printf("listening on %s", addr)
-	if err := http.ListenAndServe(addr, impl.New(impl.StaticOK{})); err != nil {
+	if err := http.ListenAndServe(addr, impl.New(impl.StaticOK{}, folder)); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}

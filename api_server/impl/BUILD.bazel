@@ -3,15 +3,24 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "impl",
-    srcs = ["server.go"],
+    srcs = [
+        "fold.go",
+        "server.go",
+    ],
     importpath = "github.com/tcw165/fintech-fun/api_server/impl",
     visibility = ["//visibility:public"],
-    deps = ["//api_server/contract"],
+    deps = [
+        "//api_server/contract",
+        "//graph/clients/neo4j:neo4j",
+    ],
 )
 
 go_test(
     name = "impl_test",
     srcs = ["server_test.go"],
     embed = [":impl"],
-    deps = ["//api_server/contract"],
+    deps = [
+        "//api_server/contract",
+        "//graph/clients/neo4j/impl:impl",
+    ],
 )
