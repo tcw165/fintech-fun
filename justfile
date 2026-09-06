@@ -10,12 +10,25 @@ image_dir := "/tmp/fintech-fun-images"
 default:
     @just --list
 
+# Host tools for the Docker-driver minikube. On Mac this means Docker Desktop is running.
+deps:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if ! command -v docker >/dev/null; then
+      echo "docker is required. On Mac: install Docker Desktop and ensure docker is on PATH." >&2
+      exit 1
+    fi
+    if ! docker info >/dev/null 2>&1; then
+      echo "docker daemon is not running. On Mac, start Docker Desktop, then retry." >&2
+      exit 1
+    fi
+
 # Start minikube (Docker driver). Safe to re-run if the profile already exists.
-cluster-start:
+cluster-start: deps
     minikube start --profile={{profile}} --driver=docker
 
 # Bazel-build Linux binaries, docker-build images, load them into the minikube profile.
-cluster-images:
+cluster-images: deps
     #!/usr/bin/env bash
     set -euo pipefail
     profile="{{profile}}"
@@ -56,8 +69,8 @@ cluster-apply:
 # Start cluster, load images, apply manifests.
 up: cluster-start cluster-images cluster-apply
 
-# Stop the VM. Data in emptyDir is gone next start.
-down:
+# Stop the VM. Data in emptyDir is gone next start. Needs Docker Desktop on Mac.
+down: deps
     #!/usr/bin/env bash
     set -euo pipefail
     if ! minikube version >/dev/null 2>&1; then
@@ -67,7 +80,7 @@ down:
     minikube stop -p "{{profile}}"
 
 # Delete the profile entirely.
-cluster-delete:
+cluster-delete: deps
     minikube delete -p {{profile}}
 
 # Hit api-server /healthz through minikube.
