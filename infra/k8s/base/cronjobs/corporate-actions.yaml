@@ -16,5 +16,4 @@ spec:
               image: fintech-fun/corporate-actions:local
               imagePullPolicy: IfNotPresent
               args:
-                - plan
-                - /dev/null
+                - refresh

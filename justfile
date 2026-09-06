@@ -91,3 +91,8 @@ healthz:
 # Open k9s on this cluster in the fintech-fun namespace.
 k9s:
     k9s --context {{profile}} --namespace {{ns}}
+
+# Re-fetch the tracker and MERGE new Event ids. Safe to re-run after new trading days.
+# waiting rows stay; a later cashed_out/now_different_stock is a new Event.
+refresh:
+    bazel run //ingest_jobs/corporate_actions -- refresh

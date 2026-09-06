@@ -27,7 +27,7 @@ just down     # stop the VM
 | Qdrant gRPC | `qdrant:6334` | `:30334` | none (local) |
 | api_server | `api-server:8080` | `:30080` | none (local) |
 
-The corporate-actions CronJob is owned by `infra/` and starts **suspended** until a live `run` subcommand exists.
+The corporate-actions CronJob is owned by `infra/`, starts **suspended**, and is wired to `refresh`. Unsuspend it after the local cluster can reach Robinhood. Locally: `just refresh` after new tracker days.
 
 Delete the profile: `just cluster-delete`.
 
@@ -75,6 +75,7 @@ bazel run //ingest_jobs/corporate_actions -- gold "$PWD/tracker.txt"
 bazel run //ingest_jobs/corporate_actions -- ingest "$PWD/tracker.txt"
 bazel run //ingest_jobs/corporate_actions -- verify
 bazel run //ingest_jobs/corporate_actions -- search "LivePerson stock merger"
+bazel run //ingest_jobs/corporate_actions -- refresh   # or: just refresh
 bazel run //ingest_jobs/corporate_actions -- ping
 bazel run //ingest_jobs/corporate_actions -- seed
 bazel run //ingest_jobs/corporate_actions -- fold square 10

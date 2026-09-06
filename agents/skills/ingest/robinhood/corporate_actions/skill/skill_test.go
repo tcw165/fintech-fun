@@ -77,6 +77,13 @@ func TestFoldIssuesAccountQuery(t *testing.T) {
 	}
 }
 
+func TestRefreshRequiresClients(t *testing.T) {
+	_, err := Skill{}.Run(context.Background(), contract.Request{Args: []string{"refresh"}})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
 func TestSearchUsesInjectedQdrant(t *testing.T) {
 	vectors := &qdrantimpl.Recording{}
 	result, err := Skill{Vectors: vectors}.Run(context.Background(), contract.Request{Args: []string{"search", "LivePerson", "stock", "merger"}})

@@ -33,7 +33,7 @@ func (Skill) Name() string { return name }
 
 func (s Skill) Run(ctx context.Context, req contract.Request) (contract.Result, error) {
 	if len(req.Args) < 1 {
-		return contract.Result{}, fmt.Errorf("usage:\n  corporate_actions parse <file>\n  corporate_actions classify <YYYY-MM-DD> <headline> [company] [ticker]\n  corporate_actions plan <file>\n  corporate_actions fetch [outfile]\n  corporate_actions gold [file]\n  corporate_actions ingest [file]\n  corporate_actions verify\n  corporate_actions search <query>\n  corporate_actions ping\n  corporate_actions seed\n  corporate_actions fold <q> <qty>\n\nsource: %s", hood_events.TrackerURL)
+		return contract.Result{}, fmt.Errorf("usage:\n  corporate_actions parse <file>\n  corporate_actions classify <YYYY-MM-DD> <headline> [company] [ticker]\n  corporate_actions plan <file>\n  corporate_actions fetch [outfile]\n  corporate_actions gold [file]\n  corporate_actions ingest [file]\n  corporate_actions verify\n  corporate_actions search <query>\n  corporate_actions refresh\n  corporate_actions ping\n  corporate_actions seed\n  corporate_actions fold <q> <qty>\n\nsource: %s", hood_events.TrackerURL)
 	}
 	var (
 		out any
@@ -56,6 +56,8 @@ func (s Skill) Run(ctx context.Context, req contract.Request) (contract.Result, 
 		out, err = s.runVerify()
 	case "search":
 		out, err = s.runSearch(req.Args)
+	case "refresh":
+		out, err = s.runRefresh()
 	case "ping":
 		out, err = s.runPing()
 	case "seed":
@@ -110,6 +112,22 @@ func trackerText(args []string) (string, error) {
 		return "", err
 	}
 	return page.Text, nil
+}
+
+const waitingPolicy = "waiting Events keep id (ticker|date|waiting). A later cashed_out or now_different_stock is a new Event on a later date, not an in-place update of the waiting row."
+
+func (s Skill) runRefresh() (any, error) {
+	if err := s.requireClients("refresh"); err != nil {
+		return nil, err
+	}
+	payload, err := s.runIngest(nil)
+	if err != nil {
+		return nil, err
+	}
+	out := payload.(map[string]any)
+	out["refresh"] = true
+	out["waiting_policy"] = waitingPolicy
+	return out, nil
 }
 
 func (s Skill) runSearch(args []string) (any, error) {
