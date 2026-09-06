@@ -1,0 +1,9 @@
+# Embedding contract. 384-d vectors. Implementation lives in //graph/embed/lexical.
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "embed",
+    srcs = ["contract.go"],
+    importpath = "github.com/tcw165/fintech-fun/graph/embed",
+    visibility = ["//visibility:public"],
+)

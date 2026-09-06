@@ -20,4 +20,8 @@ func (c *Recording) Upsert(name string, body map[string]any) (map[string]any, er
 	return map[string]any{"status": "ok", "name": name, "body": body}, nil
 }
 
+func (c *Recording) Search(name string, body map[string]any) (map[string]any, error) {
+	return map[string]any{"status": "ok", "name": name, "result": []any{}}, nil
+}
+
 var _ qdrant.Client = (*Recording)(nil)

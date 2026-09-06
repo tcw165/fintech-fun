@@ -6,6 +6,7 @@ import (
 	"github.com/tcw165/fintech-fun/graph"
 	neo4jimpl "github.com/tcw165/fintech-fun/graph/clients/neo4j/impl"
 	qdrantimpl "github.com/tcw165/fintech-fun/graph/clients/qdrant/impl"
+	"github.com/tcw165/fintech-fun/graph/embed/lexical"
 	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions"
 	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/testdata"
 )
@@ -74,7 +75,7 @@ func TestIngestClassifiedWritesGraphAndQdrant(t *testing.T) {
 	stats, err := IngestClassified(run, []hood_events.ClassifiedEvent{
 		classified("split", "Amphenol (APH) performed a 2 for 1 Forward Split.", "Amphenol", "APH"),
 		skip,
-	}, vectors)
+	}, vectors, lexical.New())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -85,7 +86,7 @@ func TestIngestClassifiedWritesGraphAndQdrant(t *testing.T) {
 
 func TestIngestTextWritesFixture(t *testing.T) {
 	run := &neo4jimpl.Recording{}
-	stats, err := IngestText(run, testdata.TrackerSept2026, &qdrantimpl.Recording{})
+	stats, err := IngestText(run, testdata.TrackerSept2026, &qdrantimpl.Recording{}, lexical.New())
 	if err != nil || stats.Written < 12 || stats.Skipped < 0 || len(stats.Stocks) == 0 {
 		t.Fatalf("%+v %v", stats, err)
 	}
