@@ -31,46 +31,45 @@ type Skill struct {
 
 func (Skill) Name() string { return name }
 
+var _ contract.Toolset = Skill{}
+
+func wrap(run func([]string) (any, error)) contract.Tool {
+	return func(_ context.Context, req contract.Request) (contract.Result, error) {
+		out, err := run(req.Args)
+		if err != nil {
+			return contract.Result{}, err
+		}
+		return contract.Result{Payload: out}, nil
+	}
+}
+
+// Tools publishes the commands listed in SKILL.md allowed-tools.
+func (s Skill) Tools() map[string]contract.Tool {
+	return map[string]contract.Tool{
+		"parse":    wrap(runParse),
+		"classify": wrap(runClassify),
+		"plan":     wrap(runPlan),
+		"fetch":    wrap(runFetch),
+		"gold":     wrap(runGold),
+		"ingest":   wrap(s.runIngest),
+		"verify":   wrap(func([]string) (any, error) { return s.runVerify() }),
+		"search":   wrap(s.runSearch),
+		"refresh":  wrap(func([]string) (any, error) { return s.runRefresh() }),
+		"ping":     wrap(func([]string) (any, error) { return s.runPing() }),
+		"seed":     wrap(func([]string) (any, error) { return s.runSeed() }),
+		"fold":     wrap(s.runFold),
+	}
+}
+
 func (s Skill) Run(ctx context.Context, req contract.Request) (contract.Result, error) {
 	if len(req.Args) < 1 {
 		return contract.Result{}, fmt.Errorf("usage:\n  corporate_actions parse <file>\n  corporate_actions classify <YYYY-MM-DD> <headline> [company] [ticker]\n  corporate_actions plan <file>\n  corporate_actions fetch [outfile]\n  corporate_actions gold [file]\n  corporate_actions ingest [file]\n  corporate_actions verify\n  corporate_actions search <query>\n  corporate_actions refresh\n  corporate_actions ping\n  corporate_actions seed\n  corporate_actions fold <q> <qty>\n\nsource: %s", hood_events.TrackerURL)
 	}
-	var (
-		out any
-		err error
-	)
-	switch req.Args[0] {
-	case "parse":
-		out, err = runParse(req.Args)
-	case "classify":
-		out, err = runClassify(req.Args)
-	case "plan":
-		out, err = runPlan(req.Args)
-	case "fetch":
-		out, err = runFetch(req.Args)
-	case "gold":
-		out, err = runGold(req.Args)
-	case "ingest":
-		out, err = s.runIngest(req.Args)
-	case "verify":
-		out, err = s.runVerify()
-	case "search":
-		out, err = s.runSearch(req.Args)
-	case "refresh":
-		out, err = s.runRefresh()
-	case "ping":
-		out, err = s.runPing()
-	case "seed":
-		out, err = s.runSeed()
-	case "fold":
-		out, err = s.runFold(req.Args)
-	default:
+	tool, ok := s.Tools()[req.Args[0]]
+	if !ok {
 		return contract.Result{}, fmt.Errorf("unknown command %q", req.Args[0])
 	}
-	if err != nil {
-		return contract.Result{}, err
-	}
-	return contract.Result{Payload: out}, nil
+	return tool(ctx, req)
 }
 
 func (s Skill) runIngest(args []string) (any, error) {
