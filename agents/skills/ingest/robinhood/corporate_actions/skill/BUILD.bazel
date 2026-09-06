@@ -11,6 +11,7 @@ go_library(
         "//agents/harness/contract",
         "//agents/skills/ingest/robinhood/corporate_actions:corporate_actions",
         "//agents/skills/ingest/robinhood/corporate_actions/classify:classify",
+        "//agents/skills/ingest/robinhood/corporate_actions/fetch:fetch",
         "//agents/skills/ingest/robinhood/corporate_actions/ingest:ingest",
         "//agents/skills/ingest/robinhood/corporate_actions/parser:parser",
         "//graph/clients/neo4j:neo4j",

@@ -10,6 +10,7 @@ import (
 	"github.com/tcw165/fintech-fun/agents/harness/contract"
 	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions"
 	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/classify"
+	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/fetch"
 	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/ingest"
 	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/parser"
 	"github.com/tcw165/fintech-fun/graph/clients/neo4j"
@@ -29,7 +30,7 @@ func (Skill) Name() string { return name }
 
 func (s Skill) Run(ctx context.Context, req contract.Request) (contract.Result, error) {
 	if len(req.Args) < 1 {
-		return contract.Result{}, fmt.Errorf("usage:\n  corporate_actions parse <file>\n  corporate_actions classify <YYYY-MM-DD> <headline> [company] [ticker]\n  corporate_actions plan <file>\n  corporate_actions ping\n  corporate_actions seed\n  corporate_actions fold <q> <qty>\n\nsource: %s", hood_events.TrackerURL)
+		return contract.Result{}, fmt.Errorf("usage:\n  corporate_actions parse <file>\n  corporate_actions classify <YYYY-MM-DD> <headline> [company] [ticker]\n  corporate_actions plan <file>\n  corporate_actions fetch [outfile]\n  corporate_actions ping\n  corporate_actions seed\n  corporate_actions fold <q> <qty>\n\nsource: %s", hood_events.TrackerURL)
 	}
 	var (
 		out any
@@ -42,6 +43,8 @@ func (s Skill) Run(ctx context.Context, req contract.Request) (contract.Result, 
 		out, err = runClassify(req.Args)
 	case "plan":
 		out, err = runPlan(req.Args)
+	case "fetch":
+		out, err = runFetch(req.Args)
 	case "ping":
 		out, err = s.runPing()
 	case "seed":
@@ -173,6 +176,28 @@ func runClassify(args []string) (any, error) {
 		ticker = args[4]
 	}
 	return classify.ClassifyHeadline(args[2], args[1], company, ticker)
+}
+
+func runFetch(args []string) (any, error) {
+	result, err := fetch.FetchTracker(nil, "")
+	if err != nil {
+		return nil, err
+	}
+	out := map[string]any{
+		"status":      "ok",
+		"url":         result.URL,
+		"bytes":       result.Bytes,
+		"status_code": result.Status,
+	}
+	if len(args) > 1 {
+		if err := os.WriteFile(args[1], []byte(result.Text), 0o644); err != nil {
+			return nil, err
+		}
+		out["path"] = args[1]
+		return out, nil
+	}
+	out["text"] = result.Text
+	return out, nil
 }
 
 func runPlan(args []string) (any, error) {
