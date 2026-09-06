@@ -8,7 +8,7 @@ Bazel 8.2 + Go 1.24 (rules_go).
 
 ## Local cluster (minikube)
 
-Neo4j, Qdrant, `api_server`, and ingest CronJobs run in one minikube profile (`fintech-fun`). Docker must be running. Need `minikube`, `kubectl`, `just`, and optionally `k9s`.
+Neo4j, Qdrant, `api_server`, and ingest CronJobs run in one minikube profile (`fintech-fun`) with `--driver=docker`. On a Mac host, **Docker Desktop must be installed and running** — `just up` / `just down` talk to that daemon. Also need `minikube`, `kubectl`, `just`, Bazel, and optionally `k9s`. `just deps` checks Docker.
 
 ```bash
 just up       # start profile, load images, apply infra/k8s/overlays/local
