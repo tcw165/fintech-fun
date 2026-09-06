@@ -83,6 +83,14 @@ func TestIngestClassifiedWritesGraphAndQdrant(t *testing.T) {
 	}
 }
 
+func TestIngestTextWritesFixture(t *testing.T) {
+	run := &neo4jimpl.Recording{}
+	stats, err := IngestText(run, testdata.TrackerSept2026, &qdrantimpl.Recording{})
+	if err != nil || stats.Written < 12 || stats.Skipped < 0 || len(stats.Stocks) == 0 {
+		t.Fatalf("%+v %v", stats, err)
+	}
+}
+
 func TestPlanIngestIsDryRun(t *testing.T) {
 	result := PlanIngest(testdata.TrackerSept2026)
 	if !result.DryRun || result.Written < 12 {

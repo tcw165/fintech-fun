@@ -64,11 +64,14 @@ func TestApplyConstraints(t *testing.T) {
 }
 
 func TestUpsertCypherUsesMergeAndRetailEdges(t *testing.T) {
-	if !strings.Contains(UpsertCompanyCypher(), "MERGE (c:Company {name: $name})") {
-		t.Fatal(UpsertCompanyCypher())
+	issuer := UpsertIssuerCypher()
+	if strings.Contains(issuer, "MERGE (c:Company {name:") {
+		t.Fatal("company name must not be a MERGE key")
 	}
-	if !strings.Contains(UpsertStockCypher(), "MERGE (c)-[:ISSUES]->(s)") {
-		t.Fatal(UpsertStockCypher())
+	for _, needle := range []string{"MERGE (s:Stock {ticker: $ticker})", "[:ISSUES]->(s)", "$company_name"} {
+		if !strings.Contains(issuer, needle) {
+			t.Fatalf("missing %s", needle)
+		}
 	}
 	event := UpsertEventCypher()
 	for _, needle := range []string{"MERGE (e)-[:HAPPENED_TO]->(s)", "YOU_NOW_HOLD", "ON CREATE SET"} {

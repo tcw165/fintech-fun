@@ -30,7 +30,7 @@ func (Skill) Name() string { return name }
 
 func (s Skill) Run(ctx context.Context, req contract.Request) (contract.Result, error) {
 	if len(req.Args) < 1 {
-		return contract.Result{}, fmt.Errorf("usage:\n  corporate_actions parse <file>\n  corporate_actions classify <YYYY-MM-DD> <headline> [company] [ticker]\n  corporate_actions plan <file>\n  corporate_actions fetch [outfile]\n  corporate_actions gold [file]\n  corporate_actions ping\n  corporate_actions seed\n  corporate_actions fold <q> <qty>\n\nsource: %s", hood_events.TrackerURL)
+		return contract.Result{}, fmt.Errorf("usage:\n  corporate_actions parse <file>\n  corporate_actions classify <YYYY-MM-DD> <headline> [company] [ticker]\n  corporate_actions plan <file>\n  corporate_actions fetch [outfile]\n  corporate_actions gold [file]\n  corporate_actions ingest [file]\n  corporate_actions ping\n  corporate_actions seed\n  corporate_actions fold <q> <qty>\n\nsource: %s", hood_events.TrackerURL)
 	}
 	var (
 		out any
@@ -47,6 +47,8 @@ func (s Skill) Run(ctx context.Context, req contract.Request) (contract.Result, 
 		out, err = runFetch(req.Args)
 	case "gold":
 		out, err = runGold(req.Args)
+	case "ingest":
+		out, err = s.runIngest(req.Args)
 	case "ping":
 		out, err = s.runPing()
 	case "seed":
@@ -60,6 +62,47 @@ func (s Skill) Run(ctx context.Context, req contract.Request) (contract.Result, 
 		return contract.Result{}, err
 	}
 	return contract.Result{Payload: out}, nil
+}
+
+func (s Skill) runIngest(args []string) (any, error) {
+	if err := s.requireClients("ingest"); err != nil {
+		return nil, err
+	}
+	text, err := trackerText(args)
+	if err != nil {
+		return nil, err
+	}
+	if err := neo4j.ApplyConstraints(s.Graph); err != nil {
+		return nil, err
+	}
+	stats, err := ingest.IngestText(s.Graph, text, s.Vectors)
+	if err != nil {
+		return nil, err
+	}
+	return map[string]any{
+		"status":     "ok",
+		"written":    stats.Written,
+		"skipped":    stats.Skipped,
+		"companies":  len(stats.Companies),
+		"stocks":     len(stats.Stocks),
+		"company_names": stats.Companies,
+		"tickers":    stats.Stocks,
+	}, nil
+}
+
+func trackerText(args []string) (string, error) {
+	if len(args) > 1 {
+		data, err := os.ReadFile(args[1])
+		if err != nil {
+			return "", err
+		}
+		return string(data), nil
+	}
+	page, err := fetch.FetchTracker(nil, "")
+	if err != nil {
+		return "", err
+	}
+	return page.Text, nil
 }
 
 func (s Skill) runPing() (any, error) {

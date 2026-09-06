@@ -19,7 +19,7 @@ func needsLiveClients(args []string) bool {
 		return false
 	}
 	switch args[0] {
-	case "ping", "seed", "fold":
+	case "ping", "seed", "fold", "ingest":
 		return true
 	default:
 		return false
