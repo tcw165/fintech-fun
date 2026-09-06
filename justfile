@@ -130,3 +130,30 @@ k9s:
 # waiting rows stay; a later cashed_out/now_different_stock is a new Event.
 refresh:
     bazel run //ingest_jobs/corporate_actions -- refresh
+
+# Host → NodePort Bolt/Qdrant. Example: just live ping
+live *args:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    host="$(minikube ip -p "{{profile}}")"
+    export NEO4J_URI="bolt://${host}:30687"
+    export NEO4J_USER=neo4j
+    export NEO4J_PASSWORD=fintechfun
+    export QDRANT_URL="http://${host}:30333"
+    bazel run //ingest_jobs/corporate_actions -- {{args}}
+
+# Reach Neo4j + Qdrant on the local cluster NodePorts.
+ping:
+    just live ping
+
+# Seed Notion fixtures (gold path for verify).
+seed:
+    just live seed
+
+# Ingest a tracker file or fetch live. Example: just ingest path/to/tracker.txt
+ingest *args:
+    just live ingest {{args}}
+
+# Memory gold + live Bolt gold (nflx…ftel) when the cluster is up.
+verify:
+    just live verify
