@@ -66,8 +66,12 @@ cluster-images: deps
 cluster-apply:
     kubectl --context {{profile}} apply -k infra/k8s/overlays/local
 
-# Start cluster, load images, apply manifests.
-up: cluster-start cluster-images cluster-apply
+# Block until Neo4j, Qdrant, and api-server are Available (Neo4j readiness is slow).
+wait:
+    kubectl --context {{profile}} -n {{ns}} wait --for=condition=available --timeout=300s deploy/neo4j deploy/qdrant deploy/api-server
+
+# Start cluster, load images, apply manifests, then wait for Ready.
+up: cluster-start cluster-images cluster-apply wait
 
 # Stop the VM. Data in emptyDir is gone next start. Needs Docker Desktop on Mac.
 down: deps
@@ -83,10 +87,20 @@ down: deps
 cluster-delete: deps
     minikube delete -p {{profile}}
 
-# Hit api-server /healthz through minikube.
+# Hit api-server /healthz through minikube. Retries while Neo4j is still coming up.
 healthz:
-    curl -sS "$(minikube service -p {{profile}} -n {{ns}} api-server --url)/healthz"
-    @echo
+    #!/usr/bin/env bash
+    set -euo pipefail
+    url="$(minikube service -p "{{profile}}" -n "{{ns}}" api-server --url)"
+    for _ in $(seq 1 30); do
+      if out="$(curl -fsS "$url/healthz")"; then
+        printf '%s\n' "$out"
+        exit 0
+      fi
+      sleep 2
+    done
+    echo "healthz failed after retries: $url" >&2
+    exit 1
 
 # Account-screen fold through minikube. Example: just fold square 10
 fold q qty:
