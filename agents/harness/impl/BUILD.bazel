@@ -1,0 +1,17 @@
+# Default harness runner. Child of //agents/harness/contract.
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "impl",
+    srcs = ["runner.go"],
+    importpath = "github.com/tcw165/fintech-fun/agents/harness/impl",
+    visibility = ["//visibility:public"],
+    deps = ["//agents/harness/contract"],
+)
+
+go_test(
+    name = "impl_test",
+    srcs = ["runner_test.go"],
+    embed = [":impl"],
+    deps = ["//agents/harness/contract"],
+)

@@ -1,0 +1,22 @@
+# Classifier. Child of //agents/skills/ingest/robinhood/corporate_actions (models).
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "classify",
+    srcs = ["classify.go"],
+    importpath = "github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/classify",
+    visibility = ["//visibility:public"],
+    deps = ["//agents/skills/ingest/robinhood/corporate_actions:corporate_actions"],
+)
+
+go_test(
+    name = "classify_test",
+    srcs = ["classify_test.go"],
+    embed = [":classify"],
+    deps = [
+        "//agents/skills/ingest/robinhood/corporate_actions:corporate_actions",
+        "//agents/skills/ingest/robinhood/corporate_actions/parser:parser",
+        "//agents/skills/ingest/robinhood/corporate_actions/testdata:testdata",
+        "//graph:graph",
+    ],
+)

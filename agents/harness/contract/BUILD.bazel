@@ -1,0 +1,9 @@
+# Harness protocol. Pure interfaces. Children implement or call this.
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "contract",
+    srcs = ["contract.go"],
+    importpath = "github.com/tcw165/fintech-fun/agents/harness/contract",
+    visibility = ["//visibility:public"],
+)

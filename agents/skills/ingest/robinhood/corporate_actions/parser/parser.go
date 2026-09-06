@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tcw165/fintech-fun/ingest/agents/robinhood/corporate_actions"
+	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions"
 )
 
 var (

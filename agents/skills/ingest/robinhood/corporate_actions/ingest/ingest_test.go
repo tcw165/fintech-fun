@@ -6,8 +6,8 @@ import (
 	"github.com/tcw165/fintech-fun/graph"
 	neo4jimpl "github.com/tcw165/fintech-fun/graph/clients/neo4j/impl"
 	qdrantimpl "github.com/tcw165/fintech-fun/graph/clients/qdrant/impl"
-	"github.com/tcw165/fintech-fun/ingest/agents/robinhood/corporate_actions"
-	"github.com/tcw165/fintech-fun/ingest/agents/robinhood/corporate_actions/testdata"
+	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions"
+	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/testdata"
 )
 
 func classified(kind, headline, company, ticker string) hood_events.ClassifiedEvent {

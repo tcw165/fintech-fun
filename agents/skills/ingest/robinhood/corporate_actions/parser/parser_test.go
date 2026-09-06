@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tcw165/fintech-fun/ingest/agents/robinhood/corporate_actions/testdata"
+	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/testdata"
 	"github.com/tcw165/fintech-fun/graph"
 )
 
