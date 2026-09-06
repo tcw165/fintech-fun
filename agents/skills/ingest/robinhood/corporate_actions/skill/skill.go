@@ -88,13 +88,17 @@ func (s Skill) runIngest(args []string) (any, error) {
 		return nil, err
 	}
 	return map[string]any{
-		"status":     "ok",
-		"written":    stats.Written,
-		"skipped":    stats.Skipped,
-		"companies":  len(stats.Companies),
-		"stocks":     len(stats.Stocks),
+		"status":        "ok",
+		"written":       stats.Written,
+		"created":       stats.Created,
+		"duplicates":    stats.Duplicates,
+		"skipped":       stats.Skipped,
+		"unchanged":     stats.Unchanged,
+		"page_sha256":   stats.PageSHA256,
+		"companies":     len(stats.Companies),
+		"stocks":        len(stats.Stocks),
 		"company_names": stats.Companies,
-		"tickers":    stats.Stocks,
+		"tickers":       stats.Stocks,
 	}, nil
 }
 

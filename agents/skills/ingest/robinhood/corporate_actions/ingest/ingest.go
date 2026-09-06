@@ -2,6 +2,8 @@
 package ingest
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"strings"
 
 	"github.com/tcw165/fintech-fun/graph"
@@ -12,6 +14,11 @@ import (
 	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/classify"
 	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/parser"
 )
+
+func PageSHA256(text string) string {
+	sum := sha256.Sum256([]byte(text))
+	return hex.EncodeToString(sum[:])
+}
 
 func youNowHoldKinds() map[graph.EventKind]bool {
 	return map[graph.EventKind]bool{
@@ -76,14 +83,22 @@ func ToGraph(classified hood_events.ClassifiedEvent) (graph.Company, graph.Stock
 }
 
 type IngestStats struct {
-	Written   int      `json:"written"`
-	Skipped   int      `json:"skipped"`
-	Companies []string `json:"companies"`
-	Stocks    []string `json:"stocks"`
+	Written    int      `json:"written"`
+	Created    int      `json:"created"`
+	Duplicates int      `json:"duplicates"`
+	Skipped    int      `json:"skipped"`
+	Unchanged  bool     `json:"unchanged"`
+	PageSHA256 string   `json:"page_sha256,omitempty"`
+	Companies  []string `json:"companies"`
+	Stocks     []string `json:"stocks"`
 }
 
 func IngestClassified(graphClient graphneo4j.Client, events []hood_events.ClassifiedEvent, vectors graphqdrant.Client, embedder embed.Embedder) (IngestStats, error) {
 	stats := IngestStats{}
+	existing, err := graphneo4j.ListEventIDs(graphClient)
+	if err != nil {
+		return stats, err
+	}
 	seenCompany := map[string]bool{}
 	seenStock := map[string]bool{}
 	var graphEvents []graph.Event
@@ -93,10 +108,16 @@ func IngestClassified(graphClient graphneo4j.Client, events []hood_events.Classi
 			stats.Skipped++
 			continue
 		}
+		if existing[event.ID()] {
+			stats.Duplicates++
+			continue
+		}
 		if _, err := graphneo4j.IngestGraph(graphClient, company, stock, []graph.Event{event}); err != nil {
 			return stats, err
 		}
+		existing[event.ID()] = true
 		graphEvents = append(graphEvents, event)
+		stats.Created++
 		stats.Written++
 		if !seenCompany[company.Name] {
 			seenCompany[company.Name] = true
@@ -170,5 +191,21 @@ func PlanIngest(text string) PlanResult {
 }
 
 func IngestText(graphClient graphneo4j.Client, text string, vectors graphqdrant.Client, embedder embed.Embedder) (IngestStats, error) {
-	return IngestClassified(graphClient, classify.ClassifyRows(parser.ParseTracker(text)), vectors, embedder)
+	hash := PageSHA256(text)
+	watermark, err := graphneo4j.ReadSource(graphClient, graph.IngestSourceCorporateActions)
+	if err != nil {
+		return IngestStats{PageSHA256: hash}, err
+	}
+	if watermark.PageSHA256 != "" && watermark.PageSHA256 == hash {
+		return IngestStats{Unchanged: true, PageSHA256: hash}, nil
+	}
+	stats, err := IngestClassified(graphClient, classify.ClassifyRows(parser.ParseTracker(text)), vectors, embedder)
+	stats.PageSHA256 = hash
+	if err != nil {
+		return stats, err
+	}
+	if err := graphneo4j.UpsertSource(graphClient, graph.IngestSourceCorporateActions, hash); err != nil {
+		return stats, err
+	}
+	return stats, nil
 }

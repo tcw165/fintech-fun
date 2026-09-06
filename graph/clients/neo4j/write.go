@@ -62,6 +62,50 @@ type IngestResult struct {
 	Events  int
 }
 
+type SourceWatermark struct {
+	ID         string
+	PageSHA256 string
+	FetchedAt  any
+}
+
+func ListEventIDs(client Client) (map[string]bool, error) {
+	rows, err := client.Run(ListEventIDsCypher(), map[string]any{})
+	if err != nil {
+		return nil, err
+	}
+	ids := map[string]bool{}
+	for _, row := range rows {
+		if id, ok := row["id"].(string); ok && id != "" {
+			ids[id] = true
+		}
+	}
+	return ids, nil
+}
+
+func ReadSource(client Client, id string) (SourceWatermark, error) {
+	rows, err := client.Run(ReadSourceCypher(), map[string]any{"id": id})
+	if err != nil {
+		return SourceWatermark{ID: id}, err
+	}
+	out := SourceWatermark{ID: id}
+	if len(rows) == 0 {
+		return out, nil
+	}
+	if hash, ok := rows[0]["page_sha256"].(string); ok {
+		out.PageSHA256 = hash
+	}
+	out.FetchedAt = rows[0]["fetched_at"]
+	return out, nil
+}
+
+func UpsertSource(client Client, id, pageSHA256 string) error {
+	_, err := client.Run(UpsertSourceCypher(), map[string]any{
+		"id":           id,
+		"page_sha256":  pageSHA256,
+	})
+	return err
+}
+
 func IngestGraph(client Client, company graph.Company, stock graph.Stock, events []graph.Event) (IngestResult, error) {
 	if _, err := UpsertStock(client, company, stock); err != nil {
 		return IngestResult{}, err
