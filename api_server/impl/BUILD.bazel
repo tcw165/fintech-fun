@@ -5,6 +5,7 @@ go_library(
     name = "impl",
     srcs = [
         "fold.go",
+        "search.go",
         "server.go",
     ],
     importpath = "github.com/tcw165/fintech-fun/api_server/impl",
@@ -12,6 +13,8 @@ go_library(
     deps = [
         "//api_server/contract",
         "//graph/clients/neo4j:neo4j",
+        "//graph/clients/qdrant:qdrant",
+        "//graph/embed:embed",
     ],
 )
 
@@ -22,5 +25,7 @@ go_test(
     deps = [
         "//api_server/contract",
         "//graph/clients/neo4j/impl:impl",
+        "//graph/clients/qdrant/impl:impl",
+        "//graph/embed/lexical:lexical",
     ],
 )

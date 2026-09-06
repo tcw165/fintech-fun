@@ -9,5 +9,7 @@ go_binary(
         "//api_server/contract",
         "//api_server/impl",
         "//graph/clients/neo4j/impl:impl",
+        "//graph/clients/qdrant/impl:impl",
+        "//graph/embed/lexical:lexical",
     ],
 )

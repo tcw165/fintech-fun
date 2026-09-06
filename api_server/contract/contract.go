@@ -20,3 +20,14 @@ type Handler interface {
 type Folder interface {
 	Fold(q string, qty float64) (FoldResponse, error)
 }
+
+type SearchResponse struct {
+	Status string `json:"status"`
+	Query  string `json:"query"`
+	Hits   any    `json:"hits,omitempty"`
+}
+
+// Searcher ranks Event.headline in Qdrant. HTTP impl depends on this, not REST.
+type Searcher interface {
+	Search(query string) (SearchResponse, error)
+}
