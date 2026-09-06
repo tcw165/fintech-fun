@@ -104,6 +104,40 @@ func TestClassifyFixture(t *testing.T) {
 	}
 }
 
+func TestClassifyLiveMustHits(t *testing.T) {
+	cases := []struct {
+		headline string
+		kind     string
+		x        float64
+		hold     string
+	}{
+		{"Netflix, Inc. (NFLX) performed a forward split. This means that customers will now have 10 shares for every 1 share of NFLX previously held.", "split", 10, ""},
+		{"Momentus Inc. (MNTS) performed a 1 for 14 Reverse Split. This means shareholders will now hold 1 share of MNTS for every 14 shares of MNTS previously held. Fractional shares from the reverse split will be paid as cash in lieu.", "reverse_split", 14, ""},
+		{"Apogee Therapeutics, Inc. (APGE) performed a cash merger. This means that shares were removed and shareholders will receive $135.11 per share in cash.", "cashed_out", 0, ""},
+		{"LivePerson (LPSN) performed a stock merger. Shareholders will receive 0.4673 new shares of SOUN for each old share of LPSN previously held.", "now_different_stock", 0.4673, "SOUN"},
+		{"Block, Inc. (SQ) performed a symbol change to XYZ.", "ticker_changed", 1, "XYZ"},
+	}
+	for _, tc := range cases {
+		events := ClassifyRow(row(tc.headline, "", ""))
+		if len(events) == 0 || events[0].Kind != tc.kind || events[0].ShareMultiplier != tc.x || events[0].YouNowHold != tc.hold {
+			t.Fatalf("%s → %+v", tc.kind, events)
+		}
+	}
+	ftel := ClassifyRow(row("Fitell Corporation Class A Ordinary Shares (FTEL) performed a ticker change to GMEX, and changed its corporate name to GMEX Robotics.", "FTEL", "Fitell"))
+	if len(ftel) != 2 || ftel[0].Kind != "ticker_changed" || ftel[0].YouNowHold != "GMEX" || ftel[1].Kind != "name_changed" || ftel[1].NewName != "GMEX Robotics" {
+		t.Fatalf("%+v", ftel)
+	}
+}
+
+func TestGoldReportCountsSkips(t *testing.T) {
+	rows := parser.ParseTracker(testdata.TrackerSept2026)
+	rows = append(rows, row("Fitell Corporation (FTEL) performed a 1:1 CUSIP change.", "FTEL", "Fitell"))
+	report := Report(rows)
+	if report.Written == 0 || report.SkipWhy["cusip"] != 1 {
+		t.Fatalf("%+v", report)
+	}
+}
+
 func TestClassifyHeadline(t *testing.T) {
 	result, err := ClassifyHeadline(
 		"Apogee Therapeutics, Inc. (APGE) performed a cash merger. Shareholders will receive $135.11 per share in cash.",

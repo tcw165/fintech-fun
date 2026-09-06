@@ -17,7 +17,7 @@ var (
 	cashRE          = regexp.MustCompile(`\$([0-9]+(?:\.[0-9]+)?)`)
 	newSharesRE     = regexp.MustCompile(`(?i)(\d+(?:\.\d+)?)\s+new shares of\s+(` + tickerPat + `)`)
 	receiveSharesRE = regexp.MustCompile(`(?i)receive\s+(\d+(?:\.\d+)?)\s+shares? of\s+(` + tickerPat + `)`)
-	tickerToRE      = regexp.MustCompile(`(?i)(?:ticker change to|changed its ticker to|ticker to)\s+(` + tickerPat + `)`)
+	tickerToRE      = regexp.MustCompile(`(?i)(?:ticker change to|changed its ticker(?: symbol)? to|ticker symbol to|symbol change to|ticker to)\s+(` + tickerPat + `)`)
 	nameToRE        = regexp.MustCompile(`(?i)(?:corporate name to|renamed to|name change(?: and ticker change)? to)\s+([^.(]+)`)
 	spinoffTickerRE = regexp.MustCompile(`(?i)spinoff of\s+(?:.+?\()?(` + tickerPat + `)\)?`)
 )
@@ -84,19 +84,19 @@ func ClassifyRow(row hood_events.TrackerRow) []hood_events.ClassifiedEvent {
 		KeepFractionals: keep, CanTrade: true,
 	}
 
-	if strings.Contains(lower, "expired worthless") || strings.Contains(lower, "declared worthless") {
+	if strings.Contains(lower, "expired worthless") || strings.Contains(lower, "declared worthless") || strings.Contains(lower, "deemed worthless") {
 		base.Kind = "worthless"
 		base.ShareMultiplier = 0
 		base.CanTrade = false
 		return []hood_events.ClassifiedEvent{base}
 	}
-	if strings.Contains(lower, "delisted pending") || strings.Contains(lower, "details are still pending") {
+	if strings.Contains(lower, "delisted pending") || strings.Contains(lower, "details are still pending") || strings.Contains(lower, "delisted to otc") {
 		base.Kind = "waiting"
 		base.ShareMultiplier = 1
 		base.CanTrade = false
 		return []hood_events.ClassifiedEvent{base}
 	}
-	if strings.Contains(lower, "cash merger") || strings.Contains(lower, "was liquidated") {
+	if strings.Contains(lower, "cash merger") || strings.Contains(lower, "was liquidated") || (strings.Contains(lower, "was acquired") && parseCash(headline) > 0 && !strings.Contains(lower, "shares of")) {
 		base.Kind = "cashed_out"
 		base.ShareMultiplier = 0
 		base.CashPerShare = parseCash(headline)
