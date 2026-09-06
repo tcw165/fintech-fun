@@ -48,6 +48,23 @@ func LPSN() (graph.Company, graph.Stock, []graph.Event) {
 		}}
 }
 
+type Fixture struct {
+	Company graph.Company
+	Stock   graph.Stock
+	Events  []graph.Event
+}
+
+func All() []Fixture {
+	return []Fixture{
+		pack(NFLX()), pack(MNTS()), pack(APGE()),
+		pack(Square()), pack(LPSN()), pack(FTEL()),
+	}
+}
+
+func pack(company graph.Company, stock graph.Stock, events []graph.Event) Fixture {
+	return Fixture{Company: company, Stock: stock, Events: events}
+}
+
 func FTEL() (graph.Company, graph.Stock, []graph.Event) {
 	return graph.Company{Name: "GMEX Robotics", AlsoKnownAs: []string{"Fitell"}},
 		graph.Stock{Ticker: "GMEX", FormerTickers: []string{"FTEL"}, Status: graph.StatusTradeable},
