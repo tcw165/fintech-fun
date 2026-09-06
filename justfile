@@ -98,6 +98,16 @@ search q:
     curl -sS -G --data-urlencode "q={{q}}" "$(minikube service -p {{profile}} -n {{ns}} api-server --url)/search"
     @echo
 
+# Company/stock/event series. Example: just graph square
+graph q:
+    curl -sS -G --data-urlencode "q={{q}}" "$(minikube service -p {{profile}} -n {{ns}} api-server --url)/v1/graph"
+    @echo
+
+# Ingest watermark (page SHA-256).
+source:
+    curl -sS "$(minikube service -p {{profile}} -n {{ns}} api-server --url)/v1/graph/source"
+    @echo
+
 # Open k9s on this cluster in the fintech-fun namespace.
 k9s:
     k9s --context {{profile}} --namespace {{ns}}

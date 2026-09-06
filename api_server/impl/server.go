@@ -10,13 +10,13 @@ import (
 	"github.com/tcw165/fintech-fun/api_server/contract"
 )
 
-func New(handler contract.Handler, folder contract.Folder, searcher contract.Searcher) http.Handler {
+func New(handler contract.Handler, folder contract.Folder, searcher contract.Searcher, grapher contract.Grapher) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(handler.Health())
 	})
-	mux.HandleFunc("GET /fold", func(w http.ResponseWriter, r *http.Request) {
+	writeFold := func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		if folder == nil {
 			w.WriteHeader(http.StatusServiceUnavailable)
@@ -37,8 +37,10 @@ func New(handler contract.Handler, folder contract.Folder, searcher contract.Sea
 			return
 		}
 		_ = json.NewEncoder(w).Encode(out)
-	})
-	mux.HandleFunc("GET /search", func(w http.ResponseWriter, r *http.Request) {
+	}
+	mux.HandleFunc("GET /fold", writeFold)
+	mux.HandleFunc("GET /v1/graph/fold", writeFold)
+	writeSearch := func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		if searcher == nil {
 			w.WriteHeader(http.StatusServiceUnavailable)
@@ -52,6 +54,44 @@ func New(handler contract.Handler, folder contract.Folder, searcher contract.Sea
 			return
 		}
 		out, err := searcher.Search(q)
+		if err != nil {
+			w.WriteHeader(http.StatusBadGateway)
+			_ = json.NewEncoder(w).Encode(map[string]string{"status": "error", "error": err.Error()})
+			return
+		}
+		_ = json.NewEncoder(w).Encode(out)
+	}
+	mux.HandleFunc("GET /search", writeSearch)
+	mux.HandleFunc("GET /v1/graph/search", writeSearch)
+	mux.HandleFunc("GET /v1/graph", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if grapher == nil {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			_ = json.NewEncoder(w).Encode(map[string]string{"status": "unavailable"})
+			return
+		}
+		q := strings.TrimSpace(r.URL.Query().Get("q"))
+		if q == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			_ = json.NewEncoder(w).Encode(map[string]string{"status": "bad_request"})
+			return
+		}
+		out, err := grapher.Series(q)
+		if err != nil {
+			w.WriteHeader(http.StatusBadGateway)
+			_ = json.NewEncoder(w).Encode(map[string]string{"status": "error", "error": err.Error()})
+			return
+		}
+		_ = json.NewEncoder(w).Encode(out)
+	})
+	mux.HandleFunc("GET /v1/graph/source", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if grapher == nil {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			_ = json.NewEncoder(w).Encode(map[string]string{"status": "unavailable"})
+			return
+		}
+		out, err := grapher.Source()
 		if err != nil {
 			w.WriteHeader(http.StatusBadGateway)
 			_ = json.NewEncoder(w).Encode(map[string]string{"status": "error", "error": err.Error()})
