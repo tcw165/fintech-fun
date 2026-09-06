@@ -28,6 +28,8 @@ go_test(
     embed = [":skill"],
     deps = [
         "//agents/harness/contract",
+        "//agents/harness/skillmd",
+        "//agents/skills/ingest/robinhood/corporate_actions:corporate_actions",
         "//graph/clients/neo4j/impl:impl",
         "//graph/clients/qdrant/impl:impl",
     ],
