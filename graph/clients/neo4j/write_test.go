@@ -32,12 +32,31 @@ func TestFoldCypherResolvesAliasAndFormerTicker(t *testing.T) {
 	}
 }
 
+func TestSeriesCypherResolvesAliasAndFormerTicker(t *testing.T) {
+	query := SeriesCypher()
+	for _, needle := range []string{"also_known_as", "former_tickers", "collect({"} {
+		if !strings.Contains(query, needle) {
+			t.Fatalf("missing %s", needle)
+		}
+	}
+}
+
 func TestFoldRunsAccountQuery(t *testing.T) {
 	var stub stubClient
 	if _, err := Fold(&stub, "square", 10); err != nil {
 		t.Fatal(err)
 	}
 	if len(stub.calls) != 1 || stub.calls[0].params["q"] != "square" || stub.calls[0].params["qty"] != 10.0 {
+		t.Fatalf("%+v", stub.calls)
+	}
+}
+
+func TestSeriesRunsGraphQuery(t *testing.T) {
+	var stub stubClient
+	if _, err := Series(&stub, "square"); err != nil {
+		t.Fatal(err)
+	}
+	if len(stub.calls) != 1 || stub.calls[0].params["q"] != "square" {
 		t.Fatalf("%+v", stub.calls)
 	}
 }
