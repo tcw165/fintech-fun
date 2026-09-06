@@ -31,3 +31,22 @@ type SearchResponse struct {
 type Searcher interface {
 	Search(query string) (SearchResponse, error)
 }
+
+type GraphResponse struct {
+	Status string           `json:"status"`
+	Q      string           `json:"q"`
+	Rows   []map[string]any `json:"rows,omitempty"`
+}
+
+type SourceResponse struct {
+	Status     string `json:"status"`
+	ID         string `json:"id"`
+	PageSHA256 string `json:"page_sha256,omitempty"`
+	FetchedAt  any    `json:"fetched_at,omitempty"`
+}
+
+// Grapher surfaces the constructed retail graph and ingest watermark.
+type Grapher interface {
+	Series(q string) (GraphResponse, error)
+	Source() (SourceResponse, error)
+}

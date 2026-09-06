@@ -91,6 +91,41 @@ func Fold(client Client, q string, qty float64) ([]map[string]any, error) {
 	return client.Run(FoldCypher(), map[string]any{"q": q, "qty": qty})
 }
 
+// SeriesCypher resolves Company + Stock + Event series without folding qty.
+func SeriesCypher() string {
+	return `WITH toLower($q) AS q
+
+MATCH (c:Company)-[:ISSUES]->(s:Stock)
+WHERE toLower(c.name) CONTAINS q
+   OR any(a IN coalesce(c.also_known_as, []) WHERE toLower(a) CONTAINS q)
+   OR toLower(s.ticker) = q
+   OR any(t IN coalesce(s.former_tickers, []) WHERE toLower(t) = q)
+
+MATCH (e:Event)-[:HAPPENED_TO]->(s)
+OPTIONAL MATCH (e)-[:YOU_NOW_HOLD]->(after:Stock)
+
+WITH c, s, e, after
+ORDER BY e.date
+
+RETURN
+  c.name   AS company,
+  s.ticker AS ticker_now,
+  s.status AS status,
+  collect({
+    id: e.id,
+    date: e.date,
+    kind: e.kind,
+    headline: e.headline,
+    share_multiplier: e.share_multiplier,
+    cash_per_share: coalesce(e.cash_per_share, 0.0),
+    now_holds: after.ticker
+  }) AS events`
+}
+
+func Series(client Client, q string) ([]map[string]any, error) {
+	return client.Run(SeriesCypher(), map[string]any{"q": q})
+}
+
 func ListEventIDsCypher() string {
 	return `MATCH (e:Event) RETURN e.id AS id`
 }

@@ -5,6 +5,7 @@ go_library(
     name = "impl",
     srcs = [
         "fold.go",
+        "graph.go",
         "search.go",
         "server.go",
     ],
@@ -12,6 +13,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//api_server/contract",
+        "//graph:graph",
         "//graph/clients/neo4j:neo4j",
         "//graph/clients/qdrant:qdrant",
         "//graph/embed:embed",

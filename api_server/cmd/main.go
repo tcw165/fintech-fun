@@ -21,15 +21,17 @@ func main() {
 		addr = ":" + v
 	}
 	var folder contract.Folder
+	var grapher contract.Grapher
 	if driver, err := neo4jimpl.OpenFromEnv(); err != nil {
 		log.Printf("neo4j unavailable: %v", err)
 	} else {
 		defer driver.Close(context.Background())
 		folder = impl.Neo4jFold{Graph: driver}
+		grapher = impl.Neo4jGraph{Graph: driver}
 	}
 	searcher := impl.QdrantSearch{Vectors: qdrantimpl.NewHTTPFromEnv(), Embed: lexical.New()}
 	log.Printf("listening on %s", addr)
-	if err := http.ListenAndServe(addr, impl.New(impl.StaticOK{}, folder, searcher)); err != nil {
+	if err := http.ListenAndServe(addr, impl.New(impl.StaticOK{}, folder, searcher, grapher)); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
