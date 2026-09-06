@@ -1,0 +1,20 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: corporate-actions
+  namespace: fintech-fun
+spec:
+  schedule: "0 6 * * *"
+  suspend: true
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: corporate-actions
+              image: fintech-fun/corporate-actions:local
+              imagePullPolicy: IfNotPresent
+              args:
+                - plan
+                - /dev/null
