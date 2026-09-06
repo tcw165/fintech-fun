@@ -12,7 +12,20 @@ import (
 type stubFold struct{}
 
 func (stubFold) Fold(q string, qty float64) (contract.FoldResponse, error) {
-	return contract.FoldResponse{Status: "ok", Q: q, Qty: qty, Rows: []map[string]any{{"company": "Block"}}}, nil
+	row := map[string]any{"company": "Block", "ticker_now": "XYZ", "qty_now": 10.0, "cash_received": 0.0}
+	switch q {
+	case "nflx":
+		row = map[string]any{"company": "Netflix", "ticker_now": "NFLX", "qty_now": 100.0, "cash_received": 0.0}
+	case "mnts":
+		row = map[string]any{"company": "Momentus", "ticker_now": "MNTS", "qty_now": 10.0, "cash_received": 0.0}
+	case "apge":
+		row = map[string]any{"company": "Apogee", "ticker_now": "APGE", "qty_now": 0.0, "cash_received": 1351.10}
+	case "lpsn":
+		row = map[string]any{"company": "LivePerson", "ticker_now": "LPSN", "qty_now": 46.73, "cash_received": 0.0}
+	case "ftel":
+		row = map[string]any{"company": "GMEX Robotics", "ticker_now": "GMEX", "qty_now": 10.0 / 16 / 8 / 7 / 9, "cash_received": 0.0}
+	}
+	return contract.FoldResponse{Status: "ok", Q: q, Qty: qty, Rows: []map[string]any{row}}, nil
 }
 
 type stubSearch struct{}
@@ -44,5 +57,14 @@ func TestHealthFailsWhenDown(t *testing.T) {
 	step := impl.HTTP{}.Health("http://127.0.0.1:1")
 	if step.OK {
 		t.Fatalf("%+v", step)
+	}
+}
+
+func TestGoldAgainstStubAPI(t *testing.T) {
+	srv := httptest.NewServer(apiimpl.New(apiimpl.StaticOK{}, stubFold{}, stubSearch{}, stubGraph{}))
+	t.Cleanup(srv.Close)
+	report := impl.HTTP{}.Gold(srv.URL)
+	if !report.AllOK() || len(report.Steps) != 6 {
+		t.Fatalf("%+v", report)
 	}
 }

@@ -129,6 +129,13 @@ smoke:
     url="$(minikube service -p "{{profile}}" -n "{{ns}}" api-server --url)"
     bazel run //infra/activation/cmd -- smoke "$url"
 
+# Confirm nflx…ftel fold rows match the Notion gold tables over HTTP.
+gold:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    url="$(minikube service -p "{{profile}}" -n "{{ns}}" api-server --url)"
+    bazel run //infra/activation/cmd -- gold "$url"
+
 # Open k9s on this cluster in the fintech-fun namespace.
 k9s:
     k9s --context {{profile}} --namespace {{ns}}

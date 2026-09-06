@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/tcw165/fintech-fun/graph/fold"
 	"github.com/tcw165/fintech-fun/infra/activation/contract"
 )
 
@@ -56,7 +57,50 @@ func (h HTTP) Smoke(api string) contract.Report {
 }
 
 func (h HTTP) Gold(api string) contract.Report {
-	return contract.Report{Status: "unimplemented"}
+	var steps []contract.Step
+	for _, want := range fold.GoldFold() {
+		raw := fmt.Sprintf("%s/fold?q=%s&qty=%g", api, url.QueryEscape(want.Q), want.Qty)
+		code, body, err := h.get(raw)
+		step := contract.Step{Name: "gold:" + want.Q}
+		if err != nil {
+			step.Detail = err.Error()
+			steps = append(steps, step)
+			continue
+		}
+		if code != http.StatusOK {
+			step.Detail = fmt.Sprintf("status=%d body=%v", code, body)
+			steps = append(steps, step)
+			continue
+		}
+		check := fold.MatchRows(asRows(body["rows"]), want)
+		step.OK = check.OK
+		if !check.OK {
+			step.Detail = fmt.Sprintf("%s qty=%v cash=%v", check.Error, check.GotQty, check.GotCash)
+		}
+		steps = append(steps, step)
+	}
+	report := contract.Report{Status: "ok", Steps: steps}
+	if !report.AllOK() {
+		report.Status = "failed"
+	}
+	return report
+}
+
+func asRows(value any) []map[string]any {
+	switch typed := value.(type) {
+	case []map[string]any:
+		return typed
+	case []any:
+		out := make([]map[string]any, 0, len(typed))
+		for _, item := range typed {
+			if row, ok := item.(map[string]any); ok {
+				out = append(out, row)
+			}
+		}
+		return out
+	default:
+		return nil
+	}
 }
 
 func (h HTTP) requireOK(rawURL, name string) contract.Step {
