@@ -11,20 +11,30 @@ func ApplyConstraints(client Client) error {
 	return nil
 }
 
+func issuerParams(company graph.Company, stock graph.Stock) map[string]any {
+	aliases := company.AlsoKnownAs
+	if aliases == nil {
+		aliases = []string{}
+	}
+	former := stock.FormerTickers
+	if former == nil {
+		former = []string{}
+	}
+	return map[string]any{
+		"ticker":         stock.Ticker,
+		"former_tickers": former,
+		"status":         string(stock.Status),
+		"company_name":   company.Name,
+		"also_known_as":  aliases,
+	}
+}
+
 func UpsertCompany(client Client, company graph.Company) ([]map[string]any, error) {
-	return client.Run(UpsertCompanyCypher(), map[string]any{
-		"name":          company.Name,
-		"also_known_as": company.AlsoKnownAs,
-	})
+	return client.Run(UpsertIssuerCypher(), issuerParams(company, graph.Stock{Ticker: company.Name}))
 }
 
 func UpsertStock(client Client, company graph.Company, stock graph.Stock) ([]map[string]any, error) {
-	return client.Run(UpsertStockCypher(), map[string]any{
-		"ticker":         stock.Ticker,
-		"former_tickers": stock.FormerTickers,
-		"status":         string(stock.Status),
-		"company_name":   company.Name,
-	})
+	return client.Run(UpsertIssuerCypher(), issuerParams(company, stock))
 }
 
 func UpsertEvent(client Client, event graph.Event) ([]map[string]any, error) {
@@ -53,9 +63,6 @@ type IngestResult struct {
 }
 
 func IngestGraph(client Client, company graph.Company, stock graph.Stock, events []graph.Event) (IngestResult, error) {
-	if _, err := UpsertCompany(client, company); err != nil {
-		return IngestResult{}, err
-	}
 	if _, err := UpsertStock(client, company, stock); err != nil {
 		return IngestResult{}, err
 	}

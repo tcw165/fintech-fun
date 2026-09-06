@@ -8,18 +8,28 @@ var Constraints = []string{
 }
 
 func UpsertCompanyCypher() string {
-	return `MERGE (c:Company {name: $name})
-SET c.also_known_as = $also_known_as
-RETURN c.name AS name`
+	return UpsertIssuerCypher()
 }
 
 func UpsertStockCypher() string {
+	return UpsertIssuerCypher()
+}
+
+// UpsertIssuerCypher attaches Company through Stock. Name is a display field, not a MERGE key.
+func UpsertIssuerCypher() string {
 	return `MERGE (s:Stock {ticker: $ticker})
 SET s.former_tickers = $former_tickers,
     s.status = $status
 WITH s
-MATCH (c:Company {name: $company_name})
-MERGE (c)-[:ISSUES]->(s)
+OPTIONAL MATCH (c:Company)-[:ISSUES]->(s)
+WITH s, c
+FOREACH (_ IN CASE WHEN c IS NULL THEN [1] ELSE [] END |
+  CREATE (n:Company {name: $company_name, also_known_as: $also_known_as})-[:ISSUES]->(s)
+)
+FOREACH (_ IN CASE WHEN c IS NOT NULL THEN [1] ELSE [] END |
+  SET c.name = $company_name,
+      c.also_known_as = $also_known_as
+)
 RETURN s.ticker AS ticker`
 }
 

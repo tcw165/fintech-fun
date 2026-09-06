@@ -50,6 +50,17 @@ func TestSeedWritesSixFixtures(t *testing.T) {
 	}
 }
 
+func TestIngestWritesFixtureThroughSkill(t *testing.T) {
+	graph := &neo4jimpl.Recording{}
+	vectors := &qdrantimpl.Recording{}
+	_, err := Skill{Graph: graph, Vectors: vectors}.Run(context.Background(), contract.Request{Args: []string{
+		"ingest", "missing-file-for-error",
+	}})
+	if err == nil {
+		t.Fatal("expected missing file")
+	}
+}
+
 func TestFoldIssuesAccountQuery(t *testing.T) {
 	graph := &neo4jimpl.Recording{}
 	vectors := &qdrantimpl.Recording{}

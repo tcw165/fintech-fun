@@ -75,12 +75,16 @@ func ToGraph(classified hood_events.ClassifiedEvent) (graph.Company, graph.Stock
 }
 
 type IngestStats struct {
-	Written int
-	Skipped int
+	Written   int      `json:"written"`
+	Skipped   int      `json:"skipped"`
+	Companies []string `json:"companies"`
+	Stocks    []string `json:"stocks"`
 }
 
 func IngestClassified(graphClient graphneo4j.Client, events []hood_events.ClassifiedEvent, vectors graphqdrant.Client) (IngestStats, error) {
 	stats := IngestStats{}
+	seenCompany := map[string]bool{}
+	seenStock := map[string]bool{}
 	var graphEvents []graph.Event
 	for _, classified := range events {
 		company, stock, event, ok := ToGraph(classified)
@@ -93,6 +97,14 @@ func IngestClassified(graphClient graphneo4j.Client, events []hood_events.Classi
 		}
 		graphEvents = append(graphEvents, event)
 		stats.Written++
+		if !seenCompany[company.Name] {
+			seenCompany[company.Name] = true
+			stats.Companies = append(stats.Companies, company.Name)
+		}
+		if !seenStock[stock.Ticker] {
+			seenStock[stock.Ticker] = true
+			stats.Stocks = append(stats.Stocks, stock.Ticker)
+		}
 	}
 	if vectors != nil && len(graphEvents) > 0 {
 		if _, err := graphqdrant.EnsureCollection(vectors); err != nil {
@@ -142,4 +154,8 @@ func PlanIngest(text string) PlanResult {
 		})
 	}
 	return PlanResult{Status: "success", DryRun: true, Written: len(planned), Skipped: skipped, Events: planned}
+}
+
+func IngestText(graphClient graphneo4j.Client, text string, vectors graphqdrant.Client) (IngestStats, error) {
+	return IngestClassified(graphClient, classify.ClassifyRows(parser.ParseTracker(text)), vectors)
 }
