@@ -14,6 +14,7 @@ Neo4j, Qdrant, `api_server`, and ingest CronJobs run in one minikube profile (`f
 just up       # start profile, load images, apply infra/k8s/overlays/local
 just healthz  # GET /healthz through minikube
 just fold square 10  # GET /fold?q=square&qty=10 through minikube
+just search "LivePerson stock merger"  # GET /search?q=… through minikube
 just k9s      # attach to context fintech-fun
 just down     # stop the VM
 ```
@@ -65,7 +66,7 @@ bazel test //agents/skills/ingest/robinhood/corporate_actions/parser:parser_test
 bazel test //api_server/impl:impl_test
 ```
 
-`GET /fold?q=square&qty=10` is the account-screen query. `api_server` injects the Bolt client at process start (`NEO4J_URI`, in-cluster `bolt://neo4j:7687`).
+`GET /fold?q=square&qty=10` is the account-screen query. `GET /search?q=` ranks `Event.headline` in Qdrant. `api_server` injects Bolt and Qdrant at process start (`NEO4J_URI` / `QDRANT_URL`; in-cluster `bolt://neo4j:7687` / `http://qdrant:6333`).
 
 The ingest job reads [Robinhood Corporate Actions Tracker](https://robinhood.com/us/en/support/articles/corporate-actions-tracker/) text day by day, classifies each row into `Event.kind`, and previews Neo4j/Qdrant writes. `ping` talks to a live cluster (defaults `bolt://localhost:7687` / `http://localhost:6333`, or `NEO4J_URI` / `QDRANT_URL`):
 

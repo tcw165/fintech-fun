@@ -93,6 +93,11 @@ fold q qty:
     curl -sS "$(minikube service -p {{profile}} -n {{ns}} api-server --url)/fold?q={{q}}&qty={{qty}}"
     @echo
 
+# Headline search through minikube. Example: just search "LivePerson stock merger"
+search q:
+    curl -sS -G --data-urlencode "q={{q}}" "$(minikube service -p {{profile}} -n {{ns}} api-server --url)/search"
+    @echo
+
 # Open k9s on this cluster in the fintech-fun namespace.
 k9s:
     k9s --context {{profile}} --namespace {{ns}}
