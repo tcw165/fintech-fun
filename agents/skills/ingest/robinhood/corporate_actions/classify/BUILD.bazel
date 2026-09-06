@@ -3,7 +3,10 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "classify",
-    srcs = ["classify.go"],
+    srcs = [
+        "classify.go",
+        "gold.go",
+    ],
     importpath = "github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/classify",
     visibility = ["//visibility:public"],
     deps = ["//agents/skills/ingest/robinhood/corporate_actions:corporate_actions"],

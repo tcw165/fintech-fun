@@ -30,7 +30,7 @@ func (Skill) Name() string { return name }
 
 func (s Skill) Run(ctx context.Context, req contract.Request) (contract.Result, error) {
 	if len(req.Args) < 1 {
-		return contract.Result{}, fmt.Errorf("usage:\n  corporate_actions parse <file>\n  corporate_actions classify <YYYY-MM-DD> <headline> [company] [ticker]\n  corporate_actions plan <file>\n  corporate_actions fetch [outfile]\n  corporate_actions ping\n  corporate_actions seed\n  corporate_actions fold <q> <qty>\n\nsource: %s", hood_events.TrackerURL)
+		return contract.Result{}, fmt.Errorf("usage:\n  corporate_actions parse <file>\n  corporate_actions classify <YYYY-MM-DD> <headline> [company] [ticker]\n  corporate_actions plan <file>\n  corporate_actions fetch [outfile]\n  corporate_actions gold [file]\n  corporate_actions ping\n  corporate_actions seed\n  corporate_actions fold <q> <qty>\n\nsource: %s", hood_events.TrackerURL)
 	}
 	var (
 		out any
@@ -45,6 +45,8 @@ func (s Skill) Run(ctx context.Context, req contract.Request) (contract.Result, 
 		out, err = runPlan(req.Args)
 	case "fetch":
 		out, err = runFetch(req.Args)
+	case "gold":
+		out, err = runGold(req.Args)
 	case "ping":
 		out, err = s.runPing()
 	case "seed":
@@ -198,6 +200,24 @@ func runFetch(args []string) (any, error) {
 	}
 	out["text"] = result.Text
 	return out, nil
+}
+
+func runGold(args []string) (any, error) {
+	var text string
+	if len(args) > 1 {
+		data, err := os.ReadFile(args[1])
+		if err != nil {
+			return nil, err
+		}
+		text = string(data)
+	} else {
+		page, err := fetch.FetchTracker(nil, "")
+		if err != nil {
+			return nil, err
+		}
+		text = page.Text
+	}
+	return classify.Report(parser.ParseTracker(text)), nil
 }
 
 func runPlan(args []string) (any, error) {
