@@ -72,6 +72,7 @@ bazel run //ingest_jobs/corporate_actions -- classify 2026-09-03 'Apogee Therape
 bazel run //ingest_jobs/corporate_actions -- plan "$PWD/agents/skills/ingest/robinhood/corporate_actions/testdata/tracker_sept_2026.txt"
 bazel run //ingest_jobs/corporate_actions -- fetch "$PWD/tracker.txt"
 bazel run //ingest_jobs/corporate_actions -- gold "$PWD/tracker.txt"
+bazel run //ingest_jobs/corporate_actions -- ingest "$PWD/tracker.txt"
 bazel run //ingest_jobs/corporate_actions -- ping
 bazel run //ingest_jobs/corporate_actions -- seed
 bazel run //ingest_jobs/corporate_actions -- fold square 10
