@@ -136,6 +136,32 @@ gold:
     url="$(minikube service -p "{{profile}}" -n "{{ns}}" api-server --url)"
     bazel run //infra/activation/cmd -- gold "$url"
 
+# Host/job path for Robinhood (same URL just refresh fetches). CronJob stays suspended until this works in-cluster.
+tracker_url := "https://robinhood.com/us/en/support/articles/corporate-actions-tracker/"
+
+egress:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    code="$(curl -fsSI -o /dev/null -w "%{http_code}" "{{tracker_url}}" || true)"
+    if [[ "$code" =~ ^2 ]]; then
+      echo "robinhood reachable from host ($code). Manual path: just refresh"
+      exit 0
+    fi
+    echo "robinhood not reachable from host (http $code). Leave CronJob suspended; use just refresh when egress works." >&2
+    exit 1
+
+# Unsuspend only after egress works. Default overlay keeps spec.suspend=true.
+unsuspend:
+    kubectl --context {{profile}} -n {{ns}} patch cronjob corporate-actions --type merge -p '{"spec":{"suspend":false}}'
+
+suspend:
+    kubectl --context {{profile}} -n {{ns}} patch cronjob corporate-actions --type merge -p '{"spec":{"suspend":true}}'
+
+# Gap A capstone: stack up, seed gold fixtures, verify Bolt, smoke HTTP, confirm fold tables.
+# CronJob stays suspended unless just egress && just unsuspend.
+gap-a: wait healthz ping seed verify smoke gold
+    @echo "Gap A HTTP+Bolt proof passed. CronJob still suspended; just egress && just unsuspend when Robinhood is reachable."
+
 # Open k9s on this cluster in the fintech-fun namespace.
 k9s:
     k9s --context {{profile}} --namespace {{ns}}
