@@ -1,0 +1,9 @@
+# API protocol. Pure interfaces.
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "contract",
+    srcs = ["contract.go"],
+    importpath = "github.com/tcw165/fintech-fun/api_server/contract",
+    visibility = ["//visibility:public"],
+)
