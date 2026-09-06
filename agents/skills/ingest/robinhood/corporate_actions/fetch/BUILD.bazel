@@ -1,0 +1,16 @@
+# HTTP fetch of the Robinhood tracker. Child of hood_events models.
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "fetch",
+    srcs = ["fetch.go"],
+    importpath = "github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/fetch",
+    visibility = ["//visibility:public"],
+    deps = ["//agents/skills/ingest/robinhood/corporate_actions:corporate_actions"],
+)
+
+go_test(
+    name = "fetch_test",
+    srcs = ["fetch_test.go"],
+    embed = [":fetch"],
+)
