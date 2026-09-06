@@ -8,6 +8,8 @@ go_binary(
     deps = [
         "//agents/harness/contract",
         "//agents/harness/impl",
+        "//agents/harness/skillmd",
+        "//agents/skills/ingest/robinhood/corporate_actions:corporate_actions",
         "//agents/skills/ingest/robinhood/corporate_actions/skill",
         "//graph/clients/neo4j/impl:impl",
         "//graph/clients/qdrant/impl:impl",

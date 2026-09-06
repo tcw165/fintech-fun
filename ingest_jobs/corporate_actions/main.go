@@ -9,6 +9,8 @@ import (
 
 	"github.com/tcw165/fintech-fun/agents/harness/contract"
 	"github.com/tcw165/fintech-fun/agents/harness/impl"
+	"github.com/tcw165/fintech-fun/agents/harness/skillmd"
+	hood_events "github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions"
 	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/skill"
 	neo4jimpl "github.com/tcw165/fintech-fun/graph/clients/neo4j/impl"
 	qdrantimpl "github.com/tcw165/fintech-fun/graph/clients/qdrant/impl"
@@ -16,7 +18,7 @@ import (
 
 func needsLiveClients(args []string) bool {
 	if len(args) == 0 {
-		return false
+		return true
 	}
 	switch args[0] {
 	case "ping", "seed", "fold", "ingest", "search", "refresh":
@@ -32,18 +34,25 @@ func wantsOptionalClients(args []string) bool {
 
 func main() {
 	ctx := context.Background()
+	doc, err := skillmd.Parse(hood_events.SkillMarkdown)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
+	manifest := impl.ManifestFrom(doc)
 	s := skill.Skill{}
-	if needsLiveClients(os.Args[1:]) || wantsOptionalClients(os.Args[1:]) {
+	args := os.Args[1:]
+	if needsLiveClients(args) || wantsOptionalClients(args) {
 		driver, err := neo4jimpl.OpenFromEnv()
 		if err != nil {
-			if needsLiveClients(os.Args[1:]) {
+			if needsLiveClients(args) {
 				fmt.Fprintln(os.Stderr, err)
 				os.Exit(2)
 			}
 		} else {
 			defer driver.Close(ctx)
 			if err := driver.Verify(ctx); err != nil {
-				if needsLiveClients(os.Args[1:]) {
+				if needsLiveClients(args) {
 					fmt.Fprintln(os.Stderr, err)
 					os.Exit(2)
 				}
@@ -53,8 +62,7 @@ func main() {
 			}
 		}
 	}
-	runner := impl.New()
-	result, err := runner.Run(ctx, s, contract.Request{Args: os.Args[1:]})
+	result, err := impl.NewSDK().Run(ctx, manifest, s.Tools(), contract.Request{Args: args})
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(2)

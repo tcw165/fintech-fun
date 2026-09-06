@@ -4,7 +4,11 @@ load("@rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "corporate_actions",
-    srcs = ["models.go"],
+    srcs = [
+        "embed.go",
+        "models.go",
+    ],
+    embedsrcs = ["SKILL.md"],
     importpath = "github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions",
     visibility = ["//visibility:public"],
 )

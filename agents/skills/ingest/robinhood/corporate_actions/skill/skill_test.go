@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/tcw165/fintech-fun/agents/harness/contract"
+	"github.com/tcw165/fintech-fun/agents/harness/skillmd"
+	hood_events "github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions"
 	neo4jimpl "github.com/tcw165/fintech-fun/graph/clients/neo4j/impl"
 	qdrantimpl "github.com/tcw165/fintech-fun/graph/clients/qdrant/impl"
 )
@@ -123,5 +125,24 @@ func TestPingRequiresClients(t *testing.T) {
 	_, err := Skill{}.Run(context.Background(), contract.Request{Args: []string{"ping"}})
 	if err == nil {
 		t.Fatal("expected error")
+	}
+}
+
+func TestToolsMatchEmbeddedSkillMarkdown(t *testing.T) {
+	doc, err := skillmd.Parse(hood_events.SkillMarkdown)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if doc.Name != "corporate-actions" || doc.DefaultTool() != "ingest" {
+		t.Fatalf("%+v", doc)
+	}
+	tools := Skill{}.Tools()
+	if len(tools) != len(doc.AllowedTools) {
+		t.Fatalf("tools %d allowed %d", len(tools), len(doc.AllowedTools))
+	}
+	for _, name := range doc.AllowedTools {
+		if tools[name] == nil || !doc.Allows(name) {
+			t.Fatalf("missing tool %s", name)
+		}
 	}
 }
