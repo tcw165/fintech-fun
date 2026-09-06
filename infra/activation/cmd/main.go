@@ -1,0 +1,40 @@
+// Command activation runs Gap A HTTP proofs against api_server.
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+	"strings"
+
+	"github.com/tcw165/fintech-fun/infra/activation/contract"
+	"github.com/tcw165/fintech-fun/infra/activation/impl"
+)
+
+func main() {
+	if len(os.Args) < 3 {
+		fmt.Fprintln(os.Stderr, "usage: activation healthz|smoke <api-base-url>")
+		os.Exit(2)
+	}
+	cmd, api := os.Args[1], strings.TrimRight(os.Args[2], "/")
+	checker := impl.HTTP{}
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+	switch cmd {
+	case contract.StepHealthz, "health":
+		step := checker.Health(api)
+		_ = enc.Encode(step)
+		if !step.OK {
+			os.Exit(2)
+		}
+	case contract.StepSmoke:
+		report := checker.Smoke(api)
+		_ = enc.Encode(report)
+		if !report.AllOK() {
+			os.Exit(2)
+		}
+	default:
+		fmt.Fprintf(os.Stderr, "unknown command %q\n", cmd)
+		os.Exit(2)
+	}
+}
