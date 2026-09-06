@@ -1,4 +1,8 @@
 # Local minikube cluster. Profile, kube context, and namespace are all `fintech-fun`.
+# Homebrew first: a leftover /usr/local/bin/minikube on Mac is often a Linux binary
+# (`exec format error`), which breaks `just down` / `just up` / `just healthz`.
+export PATH := "/opt/homebrew/bin:/usr/local/bin:" + env_var("PATH")
+
 profile := "fintech-fun"
 ns := "fintech-fun"
 image_dir := "/tmp/fintech-fun-images"
@@ -16,7 +20,6 @@ cluster-images:
     set -euo pipefail
     profile="{{profile}}"
     image_dir="{{image_dir}}"
-    export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
     minikube_bin="$(command -v minikube)"
     arch=""
     if "$minikube_bin" status -p "$profile" >/dev/null 2>&1; then
@@ -55,7 +58,13 @@ up: cluster-start cluster-images cluster-apply
 
 # Stop the VM. Data in emptyDir is gone next start.
 down:
-    minikube stop -p {{profile}}
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if ! minikube version >/dev/null 2>&1; then
+      echo "minikube is not runnable (wrong arch or missing). Prefer Homebrew: /opt/homebrew/bin/minikube" >&2
+      exit 1
+    fi
+    minikube stop -p "{{profile}}"
 
 # Delete the profile entirely.
 cluster-delete:
