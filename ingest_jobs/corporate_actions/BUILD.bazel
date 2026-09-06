@@ -1,0 +1,13 @@
+# Thin job binary. Imports harness + ingest skill; does not own pipeline logic.
+load("@rules_go//go:def.bzl", "go_binary")
+
+go_binary(
+    name = "corporate_actions",
+    srcs = ["main.go"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//agents/harness/contract",
+        "//agents/harness/impl",
+        "//agents/skills/ingest/robinhood/corporate_actions/skill",
+    ],
+)
