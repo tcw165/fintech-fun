@@ -12,13 +12,23 @@ import (
 // and remaining unclassified English. waiting→later cashed_out is a refresh concern.
 const SkipNotes = `Dropped on purpose:
 - CUSIP-only / 1:1 CUSIP change (no ticker, split, or name)
+- Partial liquidation (cash without a gone ticker; no Event.kind)
 - Multi-name reorganizations that mint two new tickers
 - Escrow / contingent CUSIP rights
 - Unclassified English that is not a closed Event.kind
+
+Classified from live English (not skipped):
+- was acquired + $ cash, no share exchange → cashed_out
+- was acquired + N shares of TICKER (incl. mixed cash+stock) → now_different_stock
+- was acquired with TBD/pending/no terms → waiting
+- spin-off / spinoff → extra_stock
 `
 
 func SkipReason(headline string) string {
 	lower := strings.ToLower(headline)
+	if strings.Contains(lower, "partial liquidation") {
+		return "partial"
+	}
 	if strings.Contains(lower, "cusip") && !strings.Contains(lower, "ticker") && !strings.Contains(lower, "split") && !strings.Contains(lower, "name") {
 		return "cusip"
 	}

@@ -13,13 +13,14 @@ import (
 const tickerPat = `[A-Z0-9]+(?:\.[A-Z0-9]+)?\^?`
 
 var (
-	ratioRE         = regexp.MustCompile(`(?i)(\d+(?:\.\d+)?)\s+for\s+(\d+(?:\.\d+)?)`)
+	ratioRE         = regexp.MustCompile(`(?i)(\d+(?:\.\d+)?)\s*-?\s*for\s*-?\s*(\d+(?:\.\d+)?)`)
 	cashRE          = regexp.MustCompile(`\$([0-9]+(?:\.[0-9]+)?)`)
 	newSharesRE     = regexp.MustCompile(`(?i)(\d+(?:\.\d+)?)\s+new shares of\s+(` + tickerPat + `)`)
 	receiveSharesRE = regexp.MustCompile(`(?i)receive\s+(\d+(?:\.\d+)?)\s+shares? of\s+(` + tickerPat + `)`)
+	sharesOfRE      = regexp.MustCompile(`(?i)(\d+(?:\.\d+)?)\s+shares? of\s+(` + tickerPat + `)`)
 	tickerToRE      = regexp.MustCompile(`(?i)(?:ticker change to|changed its ticker(?: symbol)? to|ticker symbol to|symbol change to|ticker to)\s+(` + tickerPat + `)`)
 	nameToRE        = regexp.MustCompile(`(?i)(?:corporate name to|renamed to|name change(?: and ticker change)? to)\s+([^.(]+)`)
-	spinoffTickerRE = regexp.MustCompile(`(?i)spinoff of\s+(?:.+?\()?(` + tickerPat + `)\)?`)
+	spinoffTickerRE = regexp.MustCompile(`(?i)spin-?off of\s+(?:.+?\()?(` + tickerPat + `)\)?`)
 )
 
 func parseRatio(headline string) (float64, float64, bool) {
@@ -72,10 +73,48 @@ func skipEvent(row hood_events.TrackerRow, kind string) hood_events.ClassifiedEv
 	}
 }
 
+func pendingTerms(lower string) bool {
+	switch {
+	case strings.Contains(lower, "delisted pending"),
+		strings.Contains(lower, "delisted to otc"),
+		strings.Contains(lower, "still pending"),
+		strings.Contains(lower, "untradeable"),
+		strings.Contains(lower, "tbd"),
+		strings.Contains(lower, "tba"):
+		return true
+	default:
+		return false
+	}
+}
+
+func hasShareConsideration(headline string) bool {
+	return newSharesRE.MatchString(headline) || receiveSharesRE.MatchString(headline) || sharesOfRE.MatchString(headline)
+}
+
+func applyShareExchange(base *hood_events.ClassifiedEvent, headline string) {
+	if match := newSharesRE.FindStringSubmatch(headline); match != nil {
+		base.ShareMultiplier, _ = strconv.ParseFloat(match[1], 64)
+		base.YouNowHold = match[2]
+		return
+	}
+	if match := receiveSharesRE.FindStringSubmatch(headline); match != nil {
+		base.ShareMultiplier, _ = strconv.ParseFloat(match[1], 64)
+		base.YouNowHold = match[2]
+		return
+	}
+	if match := sharesOfRE.FindStringSubmatch(headline); match != nil {
+		base.ShareMultiplier, _ = strconv.ParseFloat(match[1], 64)
+		base.YouNowHold = match[2]
+	}
+}
+
 func ClassifyRow(row hood_events.TrackerRow) []hood_events.ClassifiedEvent {
 	headline := row.Headline
 	lower := strings.ToLower(headline)
 	if strings.Contains(lower, "cusip change") && !strings.Contains(lower, "ticker") && !strings.Contains(lower, "split") && !strings.Contains(lower, "name") {
+		return []hood_events.ClassifiedEvent{skipEvent(row, "")}
+	}
+	if strings.Contains(lower, "partial liquidation") {
 		return []hood_events.ClassifiedEvent{skipEvent(row, "")}
 	}
 	keep := keepFractionals(headline)
@@ -84,49 +123,51 @@ func ClassifyRow(row hood_events.TrackerRow) []hood_events.ClassifiedEvent {
 		KeepFractionals: keep, CanTrade: true,
 	}
 
-	if strings.Contains(lower, "expired worthless") || strings.Contains(lower, "declared worthless") || strings.Contains(lower, "deemed worthless") {
+	if strings.Contains(lower, "expired worthless") || strings.Contains(lower, "declared worthless") || strings.Contains(lower, "deemed worthless") || strings.Contains(lower, "redeemed at $0") || strings.Contains(lower, "rights are no longer trading") {
 		base.Kind = "worthless"
 		base.ShareMultiplier = 0
 		base.CanTrade = false
 		return []hood_events.ClassifiedEvent{base}
 	}
-	if strings.Contains(lower, "delisted pending") || strings.Contains(lower, "details are still pending") || strings.Contains(lower, "delisted to otc") {
+	if pendingTerms(lower) {
 		base.Kind = "waiting"
 		base.ShareMultiplier = 1
 		base.CanTrade = false
 		return []hood_events.ClassifiedEvent{base}
 	}
-	if strings.Contains(lower, "cash merger") || strings.Contains(lower, "was liquidated") || (strings.Contains(lower, "was acquired") && parseCash(headline) > 0 && !strings.Contains(lower, "shares of")) {
+	if strings.Contains(lower, "cash merger") || strings.Contains(lower, "was liquidated") || strings.Contains(lower, "performed a liquidation") || strings.Contains(lower, "liquidation at $") || (strings.Contains(lower, "was acquired") && parseCash(headline) > 0 && !hasShareConsideration(headline)) {
 		base.Kind = "cashed_out"
 		base.ShareMultiplier = 0
 		base.CashPerShare = parseCash(headline)
 		base.CanTrade = false
 		return []hood_events.ClassifiedEvent{base}
 	}
-	if strings.Contains(lower, "stock merger") {
+	if strings.Contains(lower, "stock merger") || (strings.Contains(lower, "was acquired") && hasShareConsideration(headline)) {
 		base.Kind = "now_different_stock"
 		base.CanTrade = false
-		if match := newSharesRE.FindStringSubmatch(headline); match != nil {
-			base.ShareMultiplier, _ = strconv.ParseFloat(match[1], 64)
-			base.YouNowHold = match[2]
-		}
+		base.CashPerShare = parseCash(headline)
+		applyShareExchange(&base, headline)
 		return []hood_events.ClassifiedEvent{base}
 	}
-	if strings.Contains(lower, "spinoff") {
+	if strings.Contains(lower, "was acquired") {
+		base.Kind = "waiting"
+		base.ShareMultiplier = 1
+		base.CanTrade = false
+		return []hood_events.ClassifiedEvent{base}
+	}
+	if strings.Contains(lower, "spinoff") || strings.Contains(lower, "spin-off") {
 		base.Kind = "extra_stock"
 		base.ShareMultiplier = 1
-		if match := receiveSharesRE.FindStringSubmatch(headline); match != nil {
-			base.ShareMultiplier, _ = strconv.ParseFloat(match[1], 64)
-			base.YouNowHold = match[2]
-		} else if match := newSharesRE.FindStringSubmatch(headline); match != nil {
-			base.ShareMultiplier, _ = strconv.ParseFloat(match[1], 64)
-			base.YouNowHold = match[2]
-		} else if match := spinoffTickerRE.FindStringSubmatch(headline); match != nil {
-			base.YouNowHold = match[1]
+		applyShareExchange(&base, headline)
+		if base.YouNowHold == "" {
+			if match := spinoffTickerRE.FindStringSubmatch(headline); match != nil {
+				base.YouNowHold = match[1]
+			}
 		}
 		return []hood_events.ClassifiedEvent{base}
 	}
-	if strings.Contains(lower, "reverse split") {
+	splitText := strings.ReplaceAll(lower, "stock split", "split")
+	if strings.Contains(splitText, "reverse split") {
 		base.Kind = "reverse_split"
 		base.ShareMultiplier = reverseMultiplier(headline)
 		events := []hood_events.ClassifiedEvent{base}
@@ -140,7 +181,7 @@ func ClassifyRow(row hood_events.TrackerRow) []hood_events.ClassifiedEvent {
 		}
 		return events
 	}
-	if strings.Contains(lower, "forward split") {
+	if strings.Contains(splitText, "forward split") {
 		base.Kind = "split"
 		base.ShareMultiplier = forwardMultiplier(headline)
 		return []hood_events.ClassifiedEvent{base}
