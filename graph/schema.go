@@ -73,6 +73,10 @@ func (e Event) ID() string {
 	return fmt.Sprintf("%s|%s|%s", e.HappenedTo, e.Date.Format("2006-01-02"), e.Kind)
 }
 
+// IngestSourceCorporateActions is the Neo4j IngestSource.id watermark for the
+// Robinhood tracker. Re-runs compare page SHA-256 against this node.
+const IngestSourceCorporateActions = "robinhood/corporate_actions"
+
 func QtyAfter(qtyBefore float64, event Event) float64 {
 	if event.Kind == KindReverseSplit {
 		return qtyBefore / event.ShareMultiplier

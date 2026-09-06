@@ -3,6 +3,7 @@ package neo4j
 var Constraints = []string{
 	"CREATE CONSTRAINT stock_ticker IF NOT EXISTS FOR (s:Stock) REQUIRE s.ticker IS UNIQUE",
 	"CREATE CONSTRAINT event_id IF NOT EXISTS FOR (e:Event) REQUIRE e.id IS UNIQUE",
+	"CREATE CONSTRAINT ingest_source_id IF NOT EXISTS FOR (s:IngestSource) REQUIRE s.id IS UNIQUE",
 	"CREATE INDEX company_name IF NOT EXISTS FOR (c:Company) ON (c.name)",
 	"CREATE INDEX event_date IF NOT EXISTS FOR (e:Event) ON (e.date)",
 }
@@ -88,6 +89,21 @@ RETURN
 
 func Fold(client Client, q string, qty float64) ([]map[string]any, error) {
 	return client.Run(FoldCypher(), map[string]any{"q": q, "qty": qty})
+}
+
+func ListEventIDsCypher() string {
+	return `MATCH (e:Event) RETURN e.id AS id`
+}
+
+func ReadSourceCypher() string {
+	return `MATCH (s:IngestSource {id: $id}) RETURN s.page_sha256 AS page_sha256, s.fetched_at AS fetched_at`
+}
+
+func UpsertSourceCypher() string {
+	return `MERGE (s:IngestSource {id: $id})
+SET s.page_sha256 = $page_sha256,
+    s.fetched_at = datetime()
+RETURN s.id AS id, s.page_sha256 AS page_sha256`
 }
 
 func UpsertEventCypher() string {

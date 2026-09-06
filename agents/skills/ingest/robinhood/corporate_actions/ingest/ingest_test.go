@@ -1,6 +1,7 @@
 package ingest
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/tcw165/fintech-fun/graph"
@@ -89,6 +90,43 @@ func TestIngestTextWritesFixture(t *testing.T) {
 	stats, err := IngestText(run, testdata.TrackerSept2026, &qdrantimpl.Recording{}, lexical.New())
 	if err != nil || stats.Written < 12 || stats.Skipped < 0 || len(stats.Stocks) == 0 {
 		t.Fatalf("%+v %v", stats, err)
+	}
+}
+
+func TestIngestTextSkipsUnchangedPage(t *testing.T) {
+	text := testdata.TrackerSept2026
+	hash := PageSHA256(text)
+	writes := 0
+	client := neo4jimpl.Func(func(cypher string, _ map[string]any) ([]map[string]any, error) {
+		if strings.Contains(cypher, "RETURN s.page_sha256") {
+			return []map[string]any{{"page_sha256": hash}}, nil
+		}
+		writes++
+		return []map[string]any{}, nil
+	})
+	stats, err := IngestText(client, text, nil, nil)
+	if err != nil || !stats.Unchanged || stats.Written != 0 || stats.PageSHA256 != hash || writes != 0 {
+		t.Fatalf("%+v writes=%d err=%v", stats, writes, err)
+	}
+}
+
+func TestIngestClassifiedSkipsExistingEventIDs(t *testing.T) {
+	item := classified("split", "Amphenol (APH) performed a 2 for 1 Forward Split.", "Amphenol", "APH")
+	_, _, event, ok := ToGraph(item)
+	if !ok {
+		t.Fatal("expected graph row")
+	}
+	upserts := 0
+	client := neo4jimpl.Func(func(cypher string, _ map[string]any) ([]map[string]any, error) {
+		if strings.Contains(cypher, "RETURN e.id AS id") {
+			return []map[string]any{{"id": event.ID()}}, nil
+		}
+		upserts++
+		return []map[string]any{{"ok": true}}, nil
+	})
+	stats, err := IngestClassified(client, []hood_events.ClassifiedEvent{item}, nil, nil)
+	if err != nil || stats.Duplicates != 1 || stats.Created != 0 || stats.Written != 0 || upserts != 0 {
+		t.Fatalf("%+v upserts=%d err=%v", stats, upserts, err)
 	}
 }
 

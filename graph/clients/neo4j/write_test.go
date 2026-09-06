@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/tcw165/fintech-fun/graph"
 	"github.com/tcw165/fintech-fun/graph/examples"
 )
 
@@ -43,13 +44,31 @@ func TestFoldRunsAccountQuery(t *testing.T) {
 
 func TestConstraintsCoverStockEventAndIndexes(t *testing.T) {
 	joined := strings.Join(Constraints, "\n")
-	for _, needle := range []string{"stock_ticker", "event_id", "company_name"} {
+	for _, needle := range []string{"stock_ticker", "event_id", "ingest_source_id", "company_name"} {
 		if !strings.Contains(joined, needle) {
 			t.Fatalf("missing %s", needle)
 		}
 	}
 	if strings.Contains(joined, "REQUIRE c.name IS UNIQUE") {
 		t.Fatal("company name must not be unique")
+	}
+}
+
+func TestListEventIDsAndReadSource(t *testing.T) {
+	var stub stubClient
+	ids, err := ListEventIDs(&stub)
+	if err != nil || len(ids) != 0 {
+		t.Fatalf("%v %v", ids, err)
+	}
+	wm, err := ReadSource(&stub, graph.IngestSourceCorporateActions)
+	if err != nil || wm.PageSHA256 != "" || wm.ID != graph.IngestSourceCorporateActions {
+		t.Fatalf("%+v %v", wm, err)
+	}
+	if err := UpsertSource(&stub, graph.IngestSourceCorporateActions, "abc"); err != nil {
+		t.Fatal(err)
+	}
+	if len(stub.calls) != 3 {
+		t.Fatalf("calls %d", len(stub.calls))
 	}
 }
 
