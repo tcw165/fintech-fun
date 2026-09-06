@@ -16,6 +16,7 @@ import (
 	"github.com/tcw165/fintech-fun/graph/clients/neo4j"
 	"github.com/tcw165/fintech-fun/graph/clients/qdrant"
 	"github.com/tcw165/fintech-fun/graph/examples"
+	"github.com/tcw165/fintech-fun/graph/fold"
 )
 
 const name = "ingest/robinhood/corporate_actions"
@@ -30,7 +31,7 @@ func (Skill) Name() string { return name }
 
 func (s Skill) Run(ctx context.Context, req contract.Request) (contract.Result, error) {
 	if len(req.Args) < 1 {
-		return contract.Result{}, fmt.Errorf("usage:\n  corporate_actions parse <file>\n  corporate_actions classify <YYYY-MM-DD> <headline> [company] [ticker]\n  corporate_actions plan <file>\n  corporate_actions fetch [outfile]\n  corporate_actions gold [file]\n  corporate_actions ingest [file]\n  corporate_actions ping\n  corporate_actions seed\n  corporate_actions fold <q> <qty>\n\nsource: %s", hood_events.TrackerURL)
+		return contract.Result{}, fmt.Errorf("usage:\n  corporate_actions parse <file>\n  corporate_actions classify <YYYY-MM-DD> <headline> [company] [ticker]\n  corporate_actions plan <file>\n  corporate_actions fetch [outfile]\n  corporate_actions gold [file]\n  corporate_actions ingest [file]\n  corporate_actions verify\n  corporate_actions ping\n  corporate_actions seed\n  corporate_actions fold <q> <qty>\n\nsource: %s", hood_events.TrackerURL)
 	}
 	var (
 		out any
@@ -49,6 +50,8 @@ func (s Skill) Run(ctx context.Context, req contract.Request) (contract.Result, 
 		out, err = runGold(req.Args)
 	case "ingest":
 		out, err = s.runIngest(req.Args)
+	case "verify":
+		out, err = s.runVerify()
 	case "ping":
 		out, err = s.runPing()
 	case "seed":
@@ -103,6 +106,35 @@ func trackerText(args []string) (string, error) {
 		return "", err
 	}
 	return page.Text, nil
+}
+
+func (s Skill) runVerify() (any, error) {
+	memory := fold.VerifyExamples()
+	ok := 0
+	for _, check := range memory {
+		if check.OK {
+			ok++
+		}
+	}
+	out := map[string]any{"status": "ok", "passed": ok, "checks": memory}
+	if s.Graph != nil {
+		var bolt []map[string]any
+		for _, want := range fold.Expectations() {
+			rows, err := neo4j.Fold(s.Graph, want.Q, want.Qty)
+			item := map[string]any{"q": want.Q, "qty": want.Qty}
+			if err != nil {
+				item["error"] = err.Error()
+			} else {
+				item["rows"] = rows
+			}
+			bolt = append(bolt, item)
+		}
+		out["bolt"] = bolt
+	}
+	if ok != len(memory) {
+		return out, fmt.Errorf("verify failed: %d/%d", ok, len(memory))
+	}
+	return out, nil
 }
 
 func (s Skill) runPing() (any, error) {

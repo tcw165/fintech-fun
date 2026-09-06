@@ -77,6 +77,17 @@ func TestFoldIssuesAccountQuery(t *testing.T) {
 	}
 }
 
+func TestVerifyMatchesNotionTables(t *testing.T) {
+	result, err := Skill{}.Run(context.Background(), contract.Request{Args: []string{"verify"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	payload := result.Payload.(map[string]any)
+	if payload["passed"] != 9 {
+		t.Fatalf("%v", payload)
+	}
+}
+
 func TestPingRequiresClients(t *testing.T) {
 	_, err := Skill{}.Run(context.Background(), contract.Request{Args: []string{"ping"}})
 	if err == nil {
