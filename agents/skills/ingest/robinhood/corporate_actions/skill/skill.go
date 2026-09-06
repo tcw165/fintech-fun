@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/tcw165/fintech-fun/agents/harness/contract"
 	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions"
@@ -15,6 +16,7 @@ import (
 	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/parser"
 	"github.com/tcw165/fintech-fun/graph/clients/neo4j"
 	"github.com/tcw165/fintech-fun/graph/clients/qdrant"
+	"github.com/tcw165/fintech-fun/graph/embed/lexical"
 	"github.com/tcw165/fintech-fun/graph/examples"
 	"github.com/tcw165/fintech-fun/graph/fold"
 )
@@ -31,7 +33,7 @@ func (Skill) Name() string { return name }
 
 func (s Skill) Run(ctx context.Context, req contract.Request) (contract.Result, error) {
 	if len(req.Args) < 1 {
-		return contract.Result{}, fmt.Errorf("usage:\n  corporate_actions parse <file>\n  corporate_actions classify <YYYY-MM-DD> <headline> [company] [ticker]\n  corporate_actions plan <file>\n  corporate_actions fetch [outfile]\n  corporate_actions gold [file]\n  corporate_actions ingest [file]\n  corporate_actions verify\n  corporate_actions ping\n  corporate_actions seed\n  corporate_actions fold <q> <qty>\n\nsource: %s", hood_events.TrackerURL)
+		return contract.Result{}, fmt.Errorf("usage:\n  corporate_actions parse <file>\n  corporate_actions classify <YYYY-MM-DD> <headline> [company] [ticker]\n  corporate_actions plan <file>\n  corporate_actions fetch [outfile]\n  corporate_actions gold [file]\n  corporate_actions ingest [file]\n  corporate_actions verify\n  corporate_actions search <query>\n  corporate_actions ping\n  corporate_actions seed\n  corporate_actions fold <q> <qty>\n\nsource: %s", hood_events.TrackerURL)
 	}
 	var (
 		out any
@@ -52,6 +54,8 @@ func (s Skill) Run(ctx context.Context, req contract.Request) (contract.Result, 
 		out, err = s.runIngest(req.Args)
 	case "verify":
 		out, err = s.runVerify()
+	case "search":
+		out, err = s.runSearch(req.Args)
 	case "ping":
 		out, err = s.runPing()
 	case "seed":
@@ -78,7 +82,7 @@ func (s Skill) runIngest(args []string) (any, error) {
 	if err := neo4j.ApplyConstraints(s.Graph); err != nil {
 		return nil, err
 	}
-	stats, err := ingest.IngestText(s.Graph, text, s.Vectors)
+	stats, err := ingest.IngestText(s.Graph, text, s.Vectors, lexical.New())
 	if err != nil {
 		return nil, err
 	}
@@ -106,6 +110,25 @@ func trackerText(args []string) (string, error) {
 		return "", err
 	}
 	return page.Text, nil
+}
+
+func (s Skill) runSearch(args []string) (any, error) {
+	if s.Vectors == nil {
+		return nil, fmt.Errorf("search requires an injected Qdrant client")
+	}
+	if len(args) < 2 {
+		return nil, fmt.Errorf("search requires a query")
+	}
+	query := strings.Join(args[1:], " ")
+	vecs, err := lexical.New().Embed([]string{query})
+	if err != nil {
+		return nil, err
+	}
+	hits, err := qdrant.SearchHeadlines(s.Vectors, vecs[0], 5)
+	if err != nil {
+		return nil, err
+	}
+	return map[string]any{"status": "ok", "query": query, "hits": hits}, nil
 }
 
 func (s Skill) runVerify() (any, error) {

@@ -1,0 +1,20 @@
+# Lexical 384-d embedder. Child of //graph/embed.
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "lexical",
+    srcs = ["lexical.go"],
+    importpath = "github.com/tcw165/fintech-fun/graph/embed/lexical",
+    visibility = ["//visibility:public"],
+    deps = ["//graph/embed:embed"],
+)
+
+go_test(
+    name = "lexical_test",
+    srcs = ["lexical_test.go"],
+    embed = [":lexical"],
+    deps = [
+        "//graph/embed:embed",
+        "//graph/examples:examples",
+    ],
+)

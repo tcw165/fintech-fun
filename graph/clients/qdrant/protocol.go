@@ -83,6 +83,24 @@ func UpsertBody(events []graph.Event, vectors [][]float64) map[string]any {
 	return map[string]any{"points": points}
 }
 
+func SearchBody(vector []float64, limit int) map[string]any {
+	if limit <= 0 {
+		limit = 5
+	}
+	if len(vector) != VectorSize {
+		panic(fmt.Sprintf("vector must have %d dims, got %d", VectorSize, len(vector)))
+	}
+	return map[string]any{
+		"vector":       map[string]any{"name": VectorName, "vector": vector},
+		"limit":        limit,
+		"with_payload": true,
+	}
+}
+
+func SearchHeadlines(client Client, vector []float64, limit int) (map[string]any, error) {
+	return client.Search(Collection, SearchBody(vector, limit))
+}
+
 func EnsureCollection(client Client) (map[string]any, error) {
 	return client.PutCollection(Collection, CollectionBody())
 }

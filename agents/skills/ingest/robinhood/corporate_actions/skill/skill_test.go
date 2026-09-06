@@ -77,6 +77,18 @@ func TestFoldIssuesAccountQuery(t *testing.T) {
 	}
 }
 
+func TestSearchUsesInjectedQdrant(t *testing.T) {
+	vectors := &qdrantimpl.Recording{}
+	result, err := Skill{Vectors: vectors}.Run(context.Background(), contract.Request{Args: []string{"search", "LivePerson", "stock", "merger"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	payload := result.Payload.(map[string]any)
+	if payload["query"] != "LivePerson stock merger" {
+		t.Fatalf("%v", payload)
+	}
+}
+
 func TestVerifyMatchesNotionTables(t *testing.T) {
 	result, err := Skill{}.Run(context.Background(), contract.Request{Args: []string{"verify"}})
 	if err != nil {

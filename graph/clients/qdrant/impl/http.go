@@ -45,6 +45,10 @@ func (c *HTTP) Upsert(name string, body map[string]any) (map[string]any, error) 
 	return c.do(http.MethodPut, "/collections/"+name+"/points?wait=true", body)
 }
 
+func (c *HTTP) Search(name string, body map[string]any) (map[string]any, error) {
+	return c.do(http.MethodPost, "/collections/"+name+"/points/search", body)
+}
+
 func (c *HTTP) do(method, path string, body map[string]any) (map[string]any, error) {
 	if c == nil || c.BaseURL == "" {
 		return nil, fmt.Errorf("qdrant http client has no base URL")
