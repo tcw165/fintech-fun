@@ -3,15 +3,24 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "fold",
-    srcs = ["fold.go"],
+    srcs = [
+        "fold.go",
+        "verify.go",
+    ],
     importpath = "github.com/tcw165/fintech-fun/graph/fold",
     visibility = ["//visibility:public"],
-    deps = ["//graph:graph"],
+    deps = [
+        "//graph:graph",
+        "//graph/examples:examples",
+    ],
 )
 
 go_test(
     name = "fold_test",
-    srcs = ["fold_test.go"],
+    srcs = [
+        "fold_test.go",
+        "verify_test.go",
+    ],
     embed = [":fold"],
     deps = [
         "//graph:graph",
