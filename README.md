@@ -18,25 +18,16 @@ bazel test //agents/skills/hello:hello_agent_test
 
 ## Local cluster (minikube)
 
-Neo4j, Qdrant, `api_server`, and ingest CronJobs run in a single minikube profile. No Docker Compose.
+Neo4j, Qdrant, `api_server`, and ingest CronJobs run in one minikube profile (`fintech-fun`). Docker must be running. Need `minikube`, `kubectl`, `just`, and optionally `k9s`.
 
 ```bash
-minikube start --profile=fintech-fun --driver=docker
-bazel build //api_server/cmd:api_server //ingest_jobs/corporate_actions:corporate_actions
-
-mkdir -p /tmp/fintech-fun-images/api-server /tmp/fintech-fun-images/corporate-actions
-cp "$(bazel cquery --output=files //api_server/cmd:api_server)" /tmp/fintech-fun-images/api-server/api_server
-cp "$(bazel cquery --output=files //ingest_jobs/corporate_actions:corporate_actions)" /tmp/fintech-fun-images/corporate-actions/corporate_actions
-docker build -f api_server/Dockerfile -t fintech-fun/api-server:local /tmp/fintech-fun-images/api-server
-docker build -f ingest_jobs/corporate_actions/Dockerfile -t fintech-fun/corporate-actions:local /tmp/fintech-fun-images/corporate-actions
-
-minikube image load -p fintech-fun fintech-fun/api-server:local
-minikube image load -p fintech-fun fintech-fun/corporate-actions:local
-
-kubectl --context fintech-fun apply -k infra/k8s/overlays/local
-minikube service -p fintech-fun -n fintech-fun api-server --url
-k9s --context fintech-fun
+just up       # start profile, load images, apply infra/k8s/overlays/local
+just healthz  # GET /healthz through minikube
+just k9s      # attach to context fintech-fun
+just down     # stop the VM
 ```
+
+`just` lists every recipe. `just cluster-start` / `cluster-images` / `cluster-apply` are the three steps inside `up` if you want them one at a time.
 
 | Service | In-cluster | NodePort (local overlay) | Auth |
 | --- | --- | --- | --- |
@@ -48,7 +39,7 @@ k9s --context fintech-fun
 
 The corporate-actions CronJob is owned by `infra/` and starts **suspended** until a live `run` subcommand exists.
 
-Stop the cluster: `minikube stop -p fintech-fun`. Delete it: `minikube delete -p fintech-fun`.
+Delete the profile: `just cluster-delete`.
 
 ## Go layout
 
