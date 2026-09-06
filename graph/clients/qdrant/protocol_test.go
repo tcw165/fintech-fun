@@ -21,6 +21,10 @@ func (c *stubClient) Upsert(name string, body map[string]any) (map[string]any, e
 	return map[string]any{"status": "ok", "name": name, "body": body}, nil
 }
 
+func (c *stubClient) Search(name string, body map[string]any) (map[string]any, error) {
+	return map[string]any{"status": "ok", "name": name, "body": body}, nil
+}
+
 func TestCollectionIsNamedCosine384(t *testing.T) {
 	body := CollectionBody()
 	vectors := body["vectors"].(map[string]any)[VectorName].(map[string]any)

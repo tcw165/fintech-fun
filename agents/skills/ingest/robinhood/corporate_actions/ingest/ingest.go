@@ -7,6 +7,7 @@ import (
 	"github.com/tcw165/fintech-fun/graph"
 	graphneo4j "github.com/tcw165/fintech-fun/graph/clients/neo4j"
 	graphqdrant "github.com/tcw165/fintech-fun/graph/clients/qdrant"
+	"github.com/tcw165/fintech-fun/graph/embed"
 	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions"
 	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/classify"
 	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/parser"
@@ -81,7 +82,7 @@ type IngestStats struct {
 	Stocks    []string `json:"stocks"`
 }
 
-func IngestClassified(graphClient graphneo4j.Client, events []hood_events.ClassifiedEvent, vectors graphqdrant.Client) (IngestStats, error) {
+func IngestClassified(graphClient graphneo4j.Client, events []hood_events.ClassifiedEvent, vectors graphqdrant.Client, embedder embed.Embedder) (IngestStats, error) {
 	stats := IngestStats{}
 	seenCompany := map[string]bool{}
 	seenStock := map[string]bool{}
@@ -110,7 +111,19 @@ func IngestClassified(graphClient graphneo4j.Client, events []hood_events.Classi
 		if _, err := graphqdrant.EnsureCollection(vectors); err != nil {
 			return stats, err
 		}
-		if _, err := graphqdrant.UpsertEvents(vectors, graphEvents, nil); err != nil {
+		var vecs [][]float64
+		if embedder != nil {
+			texts := make([]string, len(graphEvents))
+			for i, event := range graphEvents {
+				texts[i] = event.Headline
+			}
+			embedded, err := embedder.Embed(texts)
+			if err != nil {
+				return stats, err
+			}
+			vecs = embedded
+		}
+		if _, err := graphqdrant.UpsertEvents(vectors, graphEvents, vecs); err != nil {
 			return stats, err
 		}
 	}
@@ -156,6 +169,6 @@ func PlanIngest(text string) PlanResult {
 	return PlanResult{Status: "success", DryRun: true, Written: len(planned), Skipped: skipped, Events: planned}
 }
 
-func IngestText(graphClient graphneo4j.Client, text string, vectors graphqdrant.Client) (IngestStats, error) {
-	return IngestClassified(graphClient, classify.ClassifyRows(parser.ParseTracker(text)), vectors)
+func IngestText(graphClient graphneo4j.Client, text string, vectors graphqdrant.Client, embedder embed.Embedder) (IngestStats, error) {
+	return IngestClassified(graphClient, classify.ClassifyRows(parser.ParseTracker(text)), vectors, embedder)
 }
