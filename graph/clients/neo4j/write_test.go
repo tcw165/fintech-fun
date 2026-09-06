@@ -22,6 +22,25 @@ func (s *stubClient) Run(cypher string, params map[string]any) ([]map[string]any
 	return []map[string]any{{"ok": true}}, nil
 }
 
+func TestFoldCypherResolvesAliasAndFormerTicker(t *testing.T) {
+	query := FoldCypher()
+	for _, needle := range []string{"also_known_as", "former_tickers", "reverse_split", "reduce("} {
+		if !strings.Contains(query, needle) {
+			t.Fatalf("missing %s", needle)
+		}
+	}
+}
+
+func TestFoldRunsAccountQuery(t *testing.T) {
+	var stub stubClient
+	if _, err := Fold(&stub, "square", 10); err != nil {
+		t.Fatal(err)
+	}
+	if len(stub.calls) != 1 || stub.calls[0].params["q"] != "square" || stub.calls[0].params["qty"] != 10.0 {
+		t.Fatalf("%+v", stub.calls)
+	}
+}
+
 func TestConstraintsCoverStockEventAndIndexes(t *testing.T) {
 	joined := strings.Join(Constraints, "\n")
 	for _, needle := range []string{"stock_ticker", "event_id", "company_name"} {

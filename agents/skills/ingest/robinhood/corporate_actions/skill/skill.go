@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/tcw165/fintech-fun/agents/harness/contract"
 	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions"
@@ -28,7 +29,7 @@ func (Skill) Name() string { return name }
 
 func (s Skill) Run(ctx context.Context, req contract.Request) (contract.Result, error) {
 	if len(req.Args) < 1 {
-		return contract.Result{}, fmt.Errorf("usage:\n  corporate_actions parse <file>\n  corporate_actions classify <YYYY-MM-DD> <headline> [company] [ticker]\n  corporate_actions plan <file>\n  corporate_actions ping\n\nsource: %s", hood_events.TrackerURL)
+		return contract.Result{}, fmt.Errorf("usage:\n  corporate_actions parse <file>\n  corporate_actions classify <YYYY-MM-DD> <headline> [company] [ticker]\n  corporate_actions plan <file>\n  corporate_actions ping\n  corporate_actions seed\n  corporate_actions fold <q> <qty>\n\nsource: %s", hood_events.TrackerURL)
 	}
 	var (
 		out any
@@ -43,6 +44,10 @@ func (s Skill) Run(ctx context.Context, req contract.Request) (contract.Result, 
 		out, err = runPlan(req.Args)
 	case "ping":
 		out, err = s.runPing()
+	case "seed":
+		out, err = s.runSeed()
+	case "fold":
+		out, err = s.runFold(req.Args)
 	default:
 		return contract.Result{}, fmt.Errorf("unknown command %q", req.Args[0])
 	}
@@ -83,6 +88,69 @@ func (s Skill) runPing() (any, error) {
 		"event_id":    events[0].ID(),
 		"read":        rows,
 	}, nil
+}
+
+func (s Skill) requireClients(cmd string) error {
+	if s.Graph == nil || s.Vectors == nil {
+		return fmt.Errorf("%s requires injected Neo4j and Qdrant clients", cmd)
+	}
+	return nil
+}
+
+func (s Skill) runSeed() (any, error) {
+	if err := s.requireClients("seed"); err != nil {
+		return nil, err
+	}
+	if err := neo4j.ApplyConstraints(s.Graph); err != nil {
+		return nil, err
+	}
+	if _, err := qdrant.EnsureCollection(s.Vectors); err != nil {
+		return nil, err
+	}
+	type row struct {
+		Company string `json:"company"`
+		Ticker  string `json:"ticker"`
+		Count   int    `json:"events"`
+	}
+	var events []row
+	seeded := 0
+	eventCount := 0
+	for _, fixture := range examples.All() {
+		result, err := neo4j.IngestGraph(s.Graph, fixture.Company, fixture.Stock, fixture.Events)
+		if err != nil {
+			return nil, err
+		}
+		if _, err := qdrant.UpsertEvents(s.Vectors, fixture.Events, nil); err != nil {
+			return nil, err
+		}
+		seeded++
+		eventCount += result.Events
+		events = append(events, row{Company: result.Company, Ticker: result.Ticker, Count: result.Events})
+	}
+	return map[string]any{
+		"status":   "ok",
+		"fixtures": seeded,
+		"events":   eventCount,
+		"rows":     events,
+	}, nil
+}
+
+func (s Skill) runFold(args []string) (any, error) {
+	if err := s.requireClients("fold"); err != nil {
+		return nil, err
+	}
+	if len(args) < 3 {
+		return nil, fmt.Errorf("fold requires <q> and <qty>")
+	}
+	qty, err := strconv.ParseFloat(args[2], 64)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := neo4j.Fold(s.Graph, args[1], qty)
+	if err != nil {
+		return nil, err
+	}
+	return map[string]any{"status": "ok", "q": args[1], "qty": qty, "rows": rows}, nil
 }
 
 func runParse(args []string) (any, error) {

@@ -15,7 +15,15 @@ import (
 )
 
 func needsLiveClients(args []string) bool {
-	return len(args) > 0 && args[0] == "ping"
+	if len(args) == 0 {
+		return false
+	}
+	switch args[0] {
+	case "ping", "seed", "fold":
+		return true
+	default:
+		return false
+	}
 }
 
 func main() {
