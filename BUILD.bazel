@@ -1,19 +1,4 @@
 load("@gazelle//:def.bzl", "gazelle")
-load("@rules_python//python:pip.bzl", "compile_pip_requirements")
 
 # gazelle:prefix github.com/tcw165/fintech-fun
 gazelle(name = "gazelle")
-
-compile_pip_requirements(
-    name = "requirements",
-    src = "//:requirements.in",
-    extra_args = [
-        "--no-header",
-        "--no-annotate",
-        "--no-emit-index-url",
-        "--no-emit-trusted-host",
-    ],
-    requirements_txt = "//:requirements_lock.txt",
-)
-
-exports_files(["requirements_lock.txt"])

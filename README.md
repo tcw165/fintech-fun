@@ -4,17 +4,7 @@ Playground for fin-tech ideas.
 
 ## Build
 
-Bazel 8.2 + Go 1.24 (rules_go) + Python 3.12 for the hello ADK agent. Refresh the pip lock after editing `requirements.in`:
-
-```bash
-bazel run //:requirements.update
-```
-
-Run the hello Google ADK agent tests (no live Gemini calls):
-
-```bash
-bazel test //agents/skills/hello:hello_agent_test
-```
+Bazel 8.2 + Go 1.24 (rules_go).
 
 ## Local cluster (minikube)
 
@@ -58,7 +48,6 @@ Delete the profile: `just cluster-delete`.
 //agents/harness/contract                             Skill, Runner interfaces
 //agents/harness/impl                                   default Runner → Skill.Run
 //agents/skills/ingest/robinhood/corporate_actions      models: hood_events + parser/classify/ingest/skill
-//agents/skills/hello                                   Python ADK demo skill
 //ingest_jobs/corporate_actions                         thin job binary → harness + ingest skill
 //api_server/contract                                   HealthHandler interface
 //api_server/impl                                       HTTP /healthz
