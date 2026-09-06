@@ -42,9 +42,9 @@ Delete the profile: `just cluster-delete`.
 //graph/examples                                        fixtures → graph
 //graph/fold                                            query → graph
 //graph/clients/neo4j                                   contract: Client + Cypher (no driver)
-//graph/clients/neo4j/impl                              impl → neo4j
+//graph/clients/neo4j/impl                              official Bolt driver + Recording
 //graph/clients/qdrant                                  contract: Client + collection protocol (no HTTP)
-//graph/clients/qdrant/impl                             impl → qdrant
+//graph/clients/qdrant/impl                             official REST client + Recording
 //agents/harness/contract                             Skill, Runner interfaces
 //agents/harness/impl                                   default Runner → Skill.Run
 //agents/skills/ingest/robinhood/corporate_actions      models: hood_events + parser/classify/ingest/skill
@@ -64,10 +64,11 @@ bazel test //agents/skills/ingest/robinhood/corporate_actions/parser:parser_test
 bazel test //api_server/impl:impl_test
 ```
 
-The ingest job reads [Robinhood Corporate Actions Tracker](https://robinhood.com/us/en/support/articles/corporate-actions-tracker/) text day by day, classifies each row into `Event.kind`, and previews Neo4j/Qdrant writes:
+The ingest job reads [Robinhood Corporate Actions Tracker](https://robinhood.com/us/en/support/articles/corporate-actions-tracker/) text day by day, classifies each row into `Event.kind`, and previews Neo4j/Qdrant writes. `ping` talks to a live cluster (defaults `bolt://localhost:7687` / `http://localhost:6333`, or `NEO4J_URI` / `QDRANT_URL`):
 
 ```bash
 bazel run //ingest_jobs/corporate_actions -- parse "$PWD/agents/skills/ingest/robinhood/corporate_actions/testdata/tracker_sept_2026.txt"
 bazel run //ingest_jobs/corporate_actions -- classify 2026-09-03 'Apogee Therapeutics, Inc. (APGE) performed a cash merger.'
 bazel run //ingest_jobs/corporate_actions -- plan "$PWD/agents/skills/ingest/robinhood/corporate_actions/testdata/tracker_sept_2026.txt"
+bazel run //ingest_jobs/corporate_actions -- ping
 ```

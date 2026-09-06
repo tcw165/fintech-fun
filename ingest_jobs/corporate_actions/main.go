@@ -10,11 +10,33 @@ import (
 	"github.com/tcw165/fintech-fun/agents/harness/contract"
 	"github.com/tcw165/fintech-fun/agents/harness/impl"
 	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/skill"
+	neo4jimpl "github.com/tcw165/fintech-fun/graph/clients/neo4j/impl"
+	qdrantimpl "github.com/tcw165/fintech-fun/graph/clients/qdrant/impl"
 )
 
+func needsLiveClients(args []string) bool {
+	return len(args) > 0 && args[0] == "ping"
+}
+
 func main() {
+	ctx := context.Background()
+	s := skill.Skill{}
+	if needsLiveClients(os.Args[1:]) {
+		driver, err := neo4jimpl.OpenFromEnv()
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(2)
+		}
+		defer driver.Close(ctx)
+		if err := driver.Verify(ctx); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(2)
+		}
+		s.Graph = driver
+		s.Vectors = qdrantimpl.NewHTTPFromEnv()
+	}
 	runner := impl.New()
-	result, err := runner.Run(context.Background(), skill.Skill{}, contract.Request{Args: os.Args[1:]})
+	result, err := runner.Run(ctx, s, contract.Request{Args: os.Args[1:]})
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(2)
