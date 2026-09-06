@@ -116,8 +116,50 @@ func TestVerifyIncludesBoltWhenGraphSet(t *testing.T) {
 		t.Fatal(err)
 	}
 	payload := result.Payload.(map[string]any)
-	if payload["bolt"] == nil || len(graph.Calls) == 0 {
+	if payload["bolt"] == nil || len(graph.Calls) == 0 || payload["bolt_failed"] != 0 {
 		t.Fatalf("%v calls=%d", payload, len(graph.Calls))
+	}
+}
+
+func TestVerifyBoltGoldMatchesFoldRows(t *testing.T) {
+	graph := neo4jimpl.Func(func(_ string, params map[string]any) ([]map[string]any, error) {
+		q, _ := params["q"].(string)
+		for _, want := range []struct {
+			q, company, ticker string
+			qty, cash          float64
+		}{
+			{"nflx", "Netflix", "NFLX", 100, 0},
+			{"mnts", "Momentus", "MNTS", 10, 0},
+			{"apge", "Apogee", "APGE", 0, 1351.10},
+			{"lpsn", "LivePerson", "LPSN", 46.73, 0},
+			{"square", "Block", "XYZ", 10, 0},
+			{"ftel", "GMEX Robotics", "GMEX", 10.0 / 16 / 8 / 7 / 9, 0},
+		} {
+			if q == want.q {
+				return []map[string]any{{
+					"company": want.company, "ticker_now": want.ticker,
+					"qty_now": want.qty, "cash_received": want.cash,
+				}}, nil
+			}
+		}
+		return nil, nil
+	})
+	result, err := Skill{Graph: graph}.Run(context.Background(), contract.Request{Args: []string{"verify"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Payload.(map[string]any)["bolt_failed"] != 0 {
+		t.Fatalf("%v", result.Payload)
+	}
+}
+
+func TestVerifyBoltGoldFailsOnMismatch(t *testing.T) {
+	graph := neo4jimpl.Func(func(string, map[string]any) ([]map[string]any, error) {
+		return []map[string]any{{"company": "Wrong", "ticker_now": "NOPE", "qty_now": 1.0}}, nil
+	})
+	_, err := Skill{Graph: graph}.Run(context.Background(), contract.Request{Args: []string{"verify"}})
+	if err == nil {
+		t.Fatal("expected bolt gold failure")
 	}
 }
 

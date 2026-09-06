@@ -161,22 +161,38 @@ func (s Skill) runVerify() (any, error) {
 		}
 	}
 	out := map[string]any{"status": "ok", "passed": ok, "checks": memory}
+	boltFailed := 0
 	if s.Graph != nil {
 		var bolt []map[string]any
-		for _, want := range fold.Expectations() {
+		for _, want := range fold.GoldFold() {
 			rows, err := neo4j.Fold(s.Graph, want.Q, want.Qty)
 			item := map[string]any{"q": want.Q, "qty": want.Qty}
 			if err != nil {
 				item["error"] = err.Error()
-			} else {
+				boltFailed++
+			} else if !fold.FoldShape(rows) {
+				item["skipped"] = "not_fold"
 				item["rows"] = rows
+			} else {
+				check := fold.MatchRows(rows, want)
+				item["ok"] = check.OK
+				item["got_qty"] = check.GotQty
+				item["got_cash"] = check.GotCash
+				if !check.OK {
+					item["error"] = check.Error
+					boltFailed++
+				}
 			}
 			bolt = append(bolt, item)
 		}
 		out["bolt"] = bolt
+		out["bolt_failed"] = boltFailed
 	}
 	if ok != len(memory) {
 		return out, fmt.Errorf("verify failed: %d/%d", ok, len(memory))
+	}
+	if boltFailed > 0 {
+		return out, fmt.Errorf("verify bolt gold failed: %d", boltFailed)
 	}
 	return out, nil
 }
