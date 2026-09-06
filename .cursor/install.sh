@@ -21,7 +21,9 @@ if ! command -v bazel >/dev/null 2>&1; then
   sudo install -m 0755 /tmp/bazelisk /usr/local/bin/bazel
   rm -f /tmp/bazelisk
 fi
-bazel version | head -1
+# Note: avoid piping bazel/docker output to head here — SIGPIPE under
+# `set -o pipefail` would abort the script.
+bazel version
 
 log "Docker engine (used for local Neo4j + Qdrant)"
 if ! command -v docker >/dev/null 2>&1; then

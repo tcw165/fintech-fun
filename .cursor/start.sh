@@ -45,10 +45,15 @@ ensure_container qdrant "$QDRANT_IMAGE" \
 
 log "Wait for services"
 for _ in $(seq 1 60); do
-  sudo docker logs neo4j 2>&1 | grep -q "Bolt enabled on" && break; sleep 1;
+  # Read logs into a var first; piping to `grep -q` under pipefail can
+  # SIGPIPE `docker logs` and mask the match.
+  logs="$(sudo docker logs neo4j 2>&1 || true)"
+  case "$logs" in *"Bolt enabled on"*) break ;; esac
+  sleep 1
 done
 for _ in $(seq 1 60); do
-  curl -fsS http://localhost:6333/readyz >/dev/null 2>&1 && break; sleep 1;
+  curl -fsS http://localhost:6333/readyz >/dev/null 2>&1 && break
+  sleep 1
 done
 
 log "Seed graph once (guarded: only when Neo4j is empty)"
