@@ -5,5 +5,9 @@ go_binary(
     name = "api_server",
     srcs = ["main.go"],
     visibility = ["//visibility:public"],
-    deps = ["//api_server/impl"],
+    deps = [
+        "//api_server/contract",
+        "//api_server/impl",
+        "//graph/clients/neo4j/impl:impl",
+    ],
 )
