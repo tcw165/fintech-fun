@@ -122,6 +122,13 @@ source:
     curl -sS "$(minikube service -p {{profile}} -n {{ns}} api-server --url)/v1/graph/source"
     @echo
 
+# Smoke /healthz /fold /search /v1/graph through NodePort.
+smoke:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    url="$(minikube service -p "{{profile}}" -n "{{ns}}" api-server --url)"
+    bazel run //infra/activation/cmd -- smoke "$url"
+
 # Open k9s on this cluster in the fintech-fun namespace.
 k9s:
     k9s --context {{profile}} --namespace {{ns}}

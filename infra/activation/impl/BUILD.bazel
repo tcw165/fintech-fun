@@ -1,0 +1,20 @@
+# HTTP Gap A checker. Child of //infra/activation/contract.
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "impl",
+    srcs = ["http.go"],
+    importpath = "github.com/tcw165/fintech-fun/infra/activation/impl",
+    visibility = ["//visibility:public"],
+    deps = ["//infra/activation/contract"],
+)
+
+go_test(
+    name = "impl_test",
+    srcs = ["http_test.go"],
+    deps = [
+        ":impl",
+        "//api_server/contract",
+        "//api_server/impl",
+    ],
+)

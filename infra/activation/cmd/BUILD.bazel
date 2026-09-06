@@ -1,0 +1,12 @@
+# Gap A HTTP proof entrypoint. Wires impl (DI).
+load("@rules_go//go:def.bzl", "go_binary")
+
+go_binary(
+    name = "activation",
+    srcs = ["main.go"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//infra/activation/contract",
+        "//infra/activation/impl",
+    ],
+)
