@@ -17,6 +17,7 @@ go_library(
         "//graph/clients/neo4j:neo4j",
         "//graph/clients/qdrant:qdrant",
         "//graph/examples:examples",
+        "//graph/fold:fold",
     ],
 )
 
