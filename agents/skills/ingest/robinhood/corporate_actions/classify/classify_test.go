@@ -129,12 +129,71 @@ func TestClassifyLiveMustHits(t *testing.T) {
 	}
 }
 
+func TestClassifyLiveAcquisitions(t *testing.T) {
+	cash := ClassifyRow(row("Two Harbors Investment (TWO) was acquired. Shareholders will receive $12.0000 per share of TWO previously held.", "TWO", "Two Harbors Investment"))[0]
+	if cash.Kind != "cashed_out" || cash.CashPerShare != 12 || cash.ShareMultiplier != 0 || cash.CanTrade {
+		t.Fatalf("cash %+v", cash)
+	}
+	stock := ClassifyRow(row("RE/MAX (RMAX) was acquired by The Real Brokerage (REAX). Shareholders will receive 0.5150 shares of REAX for each share of RMAX previously held. Fractional shares will be retained.", "RMAX", "RE/MAX"))[0]
+	if stock.Kind != "now_different_stock" || stock.ShareMultiplier != 0.515 || stock.YouNowHold != "REAX" || stock.CanTrade {
+		t.Fatalf("stock %+v", stock)
+	}
+	mixed := ClassifyRow(row("Time Warner (TWX) was acquired by AT&T (T). Shareholders will receive cash of $53.75 and 1.437 shares of T per TWX share previously held.", "TWX", "Time Warner"))[0]
+	if mixed.Kind != "now_different_stock" || mixed.CashPerShare != 53.75 || mixed.ShareMultiplier != 1.437 || mixed.YouNowHold != "T" {
+		t.Fatalf("mixed %+v", mixed)
+	}
+	pending := ClassifyRow(row("Tahoe Resources (TAHO) was acquired by PAAS. Details about the merger are still pending.", "TAHO", "Tahoe Resources"))[0]
+	if pending.Kind != "waiting" || pending.CanTrade {
+		t.Fatalf("pending %+v", pending)
+	}
+	tbd := ClassifyRow(row("AV Homes (AVHI) was acquired by Taylor Morrison (TMHC). The amount that shareholders will receive is TBD.", "AVHI", "AV Homes"))[0]
+	if tbd.Kind != "waiting" {
+		t.Fatalf("tbd %+v", tbd)
+	}
+	bare := ClassifyRow(row("NATIONSTAR MORTGAGE HOLDINGS (NSM) was acquired.", "NSM", "NATIONSTAR MORTGAGE HOLDINGS"))[0]
+	if bare.Kind != "waiting" || bare.CanTrade {
+		t.Fatalf("bare %+v", bare)
+	}
+	spin := ClassifyRow(row("Example Corp (EXAM) performed a spin-off of NewCo (NEWC). For every 1 share of EXAM held, shareholders will receive 1 share of NEWC.", "EXAM", "Example Corp"))[0]
+	if spin.Kind != "extra_stock" || spin.YouNowHold != "NEWC" || spin.ShareMultiplier != 1 {
+		t.Fatalf("spin %+v", spin)
+	}
+	forward := ClassifyRow(row("Braiin Limited (BRAI) performed a 3 for 1 forward stock split.", "BRAI", "Braiin Limited"))[0]
+	if forward.Kind != "split" || forward.ShareMultiplier != 3 {
+		t.Fatalf("forward stock split %+v", forward)
+	}
+	reverse := ClassifyRow(row("Cheetah Net Supply Chain Service (CTNT) performed a 1-for-200 reverse stock split.", "CTNT", ""))[0]
+	if reverse.Kind != "reverse_split" || reverse.ShareMultiplier != 200 {
+		t.Fatalf("reverse stock split %+v", reverse)
+	}
+	liq := ClassifyRow(row("Robinson Alternative Yield Pre-merger SPAC ETF (SPAX) performed a liquidation at $20.", "SPAX", ""))[0]
+	if liq.Kind != "cashed_out" || liq.CashPerShare != 20 || liq.ShareMultiplier != 0 {
+		t.Fatalf("liquidation %+v", liq)
+	}
+	zero := ClassifyRow(row("Pulse Biosciences, Inc Warrants (PLSEW) have been redeemed at $0.", "PLSEW", ""))[0]
+	if zero.Kind != "worthless" {
+		t.Fatalf("redeemed %+v", zero)
+	}
+	rights := ClassifyRow(row("OPP Rights (OPP^) rights are no longer trading.", "OPP^", ""))[0]
+	if rights.Kind != "worthless" {
+		t.Fatalf("rights %+v", rights)
+	}
+	partial := ClassifyRow(row("Solutions Defiance BMNR Option Income ETF (YBMN) performed a partial liquidation.", "YBMN", ""))[0]
+	if !partial.Skip {
+		t.Fatalf("partial %+v", partial)
+	}
+}
+
 func TestGoldReportCountsSkips(t *testing.T) {
 	rows := parser.ParseTracker(testdata.TrackerSept2026)
 	rows = append(rows, row("Fitell Corporation (FTEL) performed a 1:1 CUSIP change.", "FTEL", "Fitell"))
 	report := Report(rows)
 	if report.Written == 0 || report.SkipWhy["cusip"] != 1 {
 		t.Fatalf("%+v", report)
+	}
+	partial := Report([]hood_events.TrackerRow{row("YBMN performed a partial liquidation.", "YBMN", "")})
+	if partial.SkipWhy["partial"] != 1 {
+		t.Fatalf("%+v", partial)
 	}
 }
 
