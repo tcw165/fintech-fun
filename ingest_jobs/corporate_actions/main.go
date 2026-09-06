@@ -26,22 +26,32 @@ func needsLiveClients(args []string) bool {
 	}
 }
 
+func wantsOptionalClients(args []string) bool {
+	return len(args) > 0 && args[0] == "verify"
+}
+
 func main() {
 	ctx := context.Background()
 	s := skill.Skill{}
-	if needsLiveClients(os.Args[1:]) {
+	if needsLiveClients(os.Args[1:]) || wantsOptionalClients(os.Args[1:]) {
 		driver, err := neo4jimpl.OpenFromEnv()
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(2)
+			if needsLiveClients(os.Args[1:]) {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(2)
+			}
+		} else {
+			defer driver.Close(ctx)
+			if err := driver.Verify(ctx); err != nil {
+				if needsLiveClients(os.Args[1:]) {
+					fmt.Fprintln(os.Stderr, err)
+					os.Exit(2)
+				}
+			} else {
+				s.Graph = driver
+				s.Vectors = qdrantimpl.NewHTTPFromEnv()
+			}
 		}
-		defer driver.Close(ctx)
-		if err := driver.Verify(ctx); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(2)
-		}
-		s.Graph = driver
-		s.Vectors = qdrantimpl.NewHTTPFromEnv()
 	}
 	runner := impl.New()
 	result, err := runner.Run(ctx, s, contract.Request{Args: os.Args[1:]})
