@@ -10,6 +10,10 @@ image_dir := "/tmp/fintech-fun-images"
 default:
     @just --list
 
+# Rewrite BUILD.bazel deps from Go imports (Gazelle).
+update-build-files:
+    bazel run //:gazelle
+
 # Host tools for the Docker-driver minikube. On Mac this means Docker Desktop is running.
 deps:
     #!/usr/bin/env bash
