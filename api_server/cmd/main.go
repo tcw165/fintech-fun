@@ -12,15 +12,22 @@ import (
 )
 
 func main() {
-	app, err := di.NewFromEnv()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+	if err := new_root(listen).Execute(); err != nil {
 		os.Exit(1)
 	}
+}
+
+func listen(addr string) error {
+	app, err := di.NewFromEnv()
+	if err != nil {
+		return err
+	}
 	defer app.Close(context.Background())
+	app.SetAddr(addr)
 	log.Printf("listening on %s", app.Addr())
 	if err := http.ListenAndServe(app.Addr(), app.Handler()); err != nil {
 		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		return err
 	}
+	return nil
 }
