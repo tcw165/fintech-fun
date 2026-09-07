@@ -82,6 +82,8 @@ Delete the profile: `just cluster-delete`.
 //infra/k8s                                             minikube manifests + CronJob
 ```
 
+Sync `BUILD.bazel` deps from Go imports: `just update-build-files` (`bazel run //:gazelle`).
+
 Retail graph tests (no live cluster):
 
 ```bash
