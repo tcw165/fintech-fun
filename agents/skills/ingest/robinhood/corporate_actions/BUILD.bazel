@@ -1,14 +1,10 @@
 # Models: TrackerRow, ClassifiedEvent. Pure data.
-# Children: parser, classify, ingest, dedup, agent, testdata, skill, crawler. This module does not import them.
+# Children: parser, classify, ingest, dedup, agent, testdata. This module does not import them.
 load("@rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "corporate_actions",
-    srcs = [
-        "embed.go",
-        "models.go",
-    ],
-    embedsrcs = ["SKILL.md"],
+    srcs = ["models.go"],
     importpath = "github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions",
     visibility = ["//visibility:public"],
 )

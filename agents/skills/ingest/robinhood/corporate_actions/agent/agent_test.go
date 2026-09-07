@@ -9,8 +9,8 @@ import (
 	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/dedup"
 	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/parser"
 	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/testdata"
-	"github.com/tcw165/fintech-fun/graph/embed/lexical"
 	qdrantimpl "github.com/tcw165/fintech-fun/graph/clients/qdrant/impl"
+	"github.com/tcw165/fintech-fun/graph/embed/lexical"
 )
 
 type memory_store struct {

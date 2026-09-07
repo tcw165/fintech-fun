@@ -1,4 +1,4 @@
-# Thin job binary. Lifecycle only; di wires ingest agent + remaining skill tools.
+# Thin job binary. Lifecycle only; di wires the ingest agent, tools dispatch commands.
 load("@rules_go//go:def.bzl", "go_binary", "go_library")
 
 go_binary(
@@ -13,11 +13,8 @@ go_library(
     importpath = "github.com/tcw165/fintech-fun/ingest_jobs/corporate_actions",
     visibility = ["//visibility:private"],
     deps = [
-        "//agents/harness/contract",
-        "//agents/harness/impl",
-        "//agents/harness/skillmd",
-        "//agents/skills/ingest/robinhood/corporate_actions",
         "//ingest_jobs/corporate_actions/cli",
+        "//ingest_jobs/corporate_actions/tools",
         "//ingest_jobs/di",
     ],
 )

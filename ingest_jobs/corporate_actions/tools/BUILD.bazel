@@ -1,0 +1,39 @@
+# Job command dispatch. Child of ingest agent + parser/classify; no SKILL.md.
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "tools",
+    srcs = ["tools.go"],
+    importpath = "github.com/tcw165/fintech-fun/ingest_jobs/corporate_actions/tools",
+    visibility = ["//ingest_jobs/corporate_actions:__pkg__"],
+    deps = [
+        "//agents/skills/ingest/robinhood/corporate_actions",
+        "//agents/skills/ingest/robinhood/corporate_actions/agent",
+        "//agents/skills/ingest/robinhood/corporate_actions/classify",
+        "//agents/skills/ingest/robinhood/corporate_actions/fetch",
+        "//agents/skills/ingest/robinhood/corporate_actions/ingest",
+        "//agents/skills/ingest/robinhood/corporate_actions/parser",
+        "//graph/clients/neo4j",
+        "//graph/clients/qdrant",
+        "//graph/embed",
+        "//graph/embed/lexical",
+        "//graph/examples",
+        "//graph/fold",
+    ],
+)
+
+go_test(
+    name = "tools_test",
+    srcs = ["tools_test.go"],
+    embed = [":tools"],
+    deps = [
+        "//agents/skills/ingest/robinhood/corporate_actions/agent",
+        "//agents/skills/ingest/robinhood/corporate_actions/parser",
+        "//agents/skills/ingest/robinhood/corporate_actions/testdata",
+        "//graph/clients/neo4j",
+        "//graph/clients/neo4j/impl",
+        "//graph/clients/qdrant",
+        "//graph/clients/qdrant/impl",
+        "//graph/embed/lexical",
+    ],
+)

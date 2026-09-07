@@ -1,4 +1,4 @@
-# Cobra tree for the corporate_actions job. Child of harness contract only via main.
+# Cobra tree for the corporate_actions job. Dispatch lives in tools.
 load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(

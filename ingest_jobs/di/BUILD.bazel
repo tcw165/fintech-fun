@@ -1,4 +1,4 @@
-# Ingest job composition root. Wires skill + graph clients.
+# Ingest job composition root. Wires ingest agent + graph clients.
 load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
@@ -11,7 +11,6 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//agents/skills/ingest/robinhood/corporate_actions/agent",
-        "//agents/skills/ingest/robinhood/corporate_actions/skill",
         "//graph/clients/neo4j",
         "//graph/clients/neo4j/impl",
         "//graph/clients/qdrant",

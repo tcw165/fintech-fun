@@ -170,7 +170,7 @@ gap-a: wait healthz ping seed verify smoke gold
 k9s:
     k9s --context {{profile}} --namespace {{ns}}
 
-# Re-fetch the tracker and MERGE new Event ids. Safe to re-run after new trading days.
+# Re-fetch the tracker, prefix-dedup the full history, MERGE only the new suffix.
 # waiting rows stay; a later cashed_out/now_different_stock is a new Event.
 refresh:
     bazel run //ingest_jobs/corporate_actions -- refresh

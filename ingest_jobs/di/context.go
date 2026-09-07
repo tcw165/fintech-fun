@@ -5,7 +5,6 @@ import (
 	"context"
 
 	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/agent"
-	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/skill"
 	"github.com/tcw165/fintech-fun/graph/clients/neo4j"
 	"github.com/tcw165/fintech-fun/graph/clients/qdrant"
 	"github.com/tcw165/fintech-fun/graph/embed"
@@ -34,11 +33,25 @@ func (c *AppContext) Close(ctx context.Context) error {
 	return c.closer(ctx)
 }
 
-func (c *AppContext) Skill() skill.Skill {
+func (c *AppContext) Graph() neo4j.Client {
 	if c == nil {
-		return skill.Skill{}
+		return nil
 	}
-	return skill.Skill{Graph: c.graph_db, Vectors: c.vector_db}
+	return c.graph_db
+}
+
+func (c *AppContext) Vectors() qdrant.Client {
+	if c == nil {
+		return nil
+	}
+	return c.vector_db
+}
+
+func (c *AppContext) Embedder() embed.Embedder {
+	if c == nil {
+		return nil
+	}
+	return c.embedder
 }
 
 func (c *AppContext) Agent() *agent.Agent {
@@ -46,11 +59,4 @@ func (c *AppContext) Agent() *agent.Agent {
 		return agent.New(nil, nil, nil, nil)
 	}
 	return agent.New(c.graph_db, c.vector_db, c.embedder, agent.LiveFetcher{})
-}
-
-func UsesAgent(args []string) bool {
-	if len(args) == 0 {
-		return true
-	}
-	return args[0] == "ingest" || args[0] == "refresh"
 }
