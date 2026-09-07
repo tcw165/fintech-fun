@@ -1,0 +1,15 @@
+# Ingest-agent protocol. Pure data + Fetcher/Agent. Impl is a child.
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "contract",
+    srcs = ["contract.go"],
+    importpath = "github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/agent/contract",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "contract_test",
+    srcs = ["contract_test.go"],
+    embed = [":contract"],
+)

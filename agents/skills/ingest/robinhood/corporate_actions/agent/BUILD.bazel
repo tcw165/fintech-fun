@@ -1,0 +1,38 @@
+# Custom ingest agent. Child of contract + parser/classify/ingest/dedup/fetch.
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "agent",
+    srcs = [
+        "agent.go",
+        "fetcher.go",
+    ],
+    importpath = "github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/agent",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//agents/skills/ingest/robinhood/corporate_actions/agent/contract",
+        "//agents/skills/ingest/robinhood/corporate_actions/classify",
+        "//agents/skills/ingest/robinhood/corporate_actions/dedup",
+        "//agents/skills/ingest/robinhood/corporate_actions/fetch",
+        "//agents/skills/ingest/robinhood/corporate_actions/ingest",
+        "//agents/skills/ingest/robinhood/corporate_actions/parser",
+        "//graph",
+        "//graph/clients/neo4j",
+        "//graph/clients/qdrant",
+        "//graph/embed",
+    ],
+)
+
+go_test(
+    name = "agent_test",
+    srcs = ["agent_test.go"],
+    embed = [":agent"],
+    deps = [
+        "//agents/skills/ingest/robinhood/corporate_actions/agent/contract",
+        "//agents/skills/ingest/robinhood/corporate_actions/dedup",
+        "//agents/skills/ingest/robinhood/corporate_actions/parser",
+        "//agents/skills/ingest/robinhood/corporate_actions/testdata",
+        "//graph/clients/qdrant/impl",
+        "//graph/embed/lexical",
+    ],
+)
