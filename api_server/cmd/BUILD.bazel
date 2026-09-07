@@ -1,4 +1,4 @@
-# API process entrypoint. Wires impl (DI).
+# API process entrypoint. Lifecycle only; di wires impl.
 load("@rules_go//go:def.bzl", "go_binary")
 
 go_binary(
@@ -6,10 +6,6 @@ go_binary(
     srcs = ["main.go"],
     visibility = ["//visibility:public"],
     deps = [
-        "//api_server/contract",
-        "//api_server/impl",
-        "//graph/clients/neo4j/impl:impl",
-        "//graph/clients/qdrant/impl:impl",
-        "//graph/embed/lexical:lexical",
+        "//api_server/di",
     ],
 )

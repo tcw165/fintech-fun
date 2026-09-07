@@ -1,0 +1,34 @@
+# API process composition root. Wires impl + graph clients.
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "di",
+    srcs = [
+        "context.go",
+        "wire.go",
+    ],
+    importpath = "github.com/tcw165/fintech-fun/api_server/di",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//api_server/contract",
+        "//api_server/impl",
+        "//graph/clients/neo4j:neo4j",
+        "//graph/clients/neo4j/impl:impl",
+        "//graph/clients/qdrant:qdrant",
+        "//graph/clients/qdrant/impl:impl",
+        "//graph/embed:embed",
+        "//graph/embed/lexical:lexical",
+    ],
+)
+
+go_test(
+    name = "di_test",
+    srcs = ["context_test.go"],
+    embed = [":di"],
+    deps = [
+        "//api_server/contract",
+        "//graph/clients/neo4j/impl:impl",
+        "//graph/clients/qdrant/impl:impl",
+        "//graph/embed/lexical:lexical",
+    ],
+)

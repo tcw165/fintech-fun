@@ -8,30 +8,18 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/tcw165/fintech-fun/api_server/contract"
-	"github.com/tcw165/fintech-fun/api_server/impl"
-	neo4jimpl "github.com/tcw165/fintech-fun/graph/clients/neo4j/impl"
-	qdrantimpl "github.com/tcw165/fintech-fun/graph/clients/qdrant/impl"
-	"github.com/tcw165/fintech-fun/graph/embed/lexical"
+	"github.com/tcw165/fintech-fun/api_server/di"
 )
 
 func main() {
-	addr := ":8080"
-	if v := os.Getenv("PORT"); v != "" {
-		addr = ":" + v
+	app, err := di.NewFromEnv()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
-	var folder contract.Folder
-	var grapher contract.Grapher
-	if driver, err := neo4jimpl.OpenFromEnv(); err != nil {
-		log.Printf("neo4j unavailable: %v", err)
-	} else {
-		defer driver.Close(context.Background())
-		folder = impl.Neo4jFold{Graph: driver}
-		grapher = impl.Neo4jGraph{Graph: driver}
-	}
-	searcher := impl.QdrantSearch{Vectors: qdrantimpl.NewHTTPFromEnv(), Embed: lexical.New()}
-	log.Printf("listening on %s", addr)
-	if err := http.ListenAndServe(addr, impl.New(impl.StaticOK{}, folder, searcher, grapher)); err != nil {
+	defer app.Close(context.Background())
+	log.Printf("listening on %s", app.Addr())
+	if err := http.ListenAndServe(app.Addr(), app.Handler()); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}

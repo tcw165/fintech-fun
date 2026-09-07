@@ -60,6 +60,7 @@ Delete the profile: `just cluster-delete`.
 - Models and contracts are their own Bazel modules (pure data or protocol).
 - Client interfaces and implementations live in different modules.
 - Dependencies point child → parent. Parents never import children.
+- `di/` is for runnable modules only (servers, jobs, binaries). Library modules take injected interfaces.
 
 ```
 //graph                                                 models: Company, Stock, Event
@@ -75,6 +76,7 @@ Delete the profile: `just cluster-delete`.
 //ingest_jobs/corporate_actions                         thin job binary → harness + ingest skill
 //api_server/contract                                   HealthHandler interface
 //api_server/impl                                       HTTP /healthz
+//api_server/di                                         composition root: AppContext + clients
 //api_server/cmd                                        process entrypoint
 //infra/k8s                                             minikube manifests + CronJob
 ```
@@ -85,7 +87,7 @@ Retail graph tests (no live cluster):
 bazel test //graph:schema_test //graph/fold:fold_test //graph/clients/neo4j:neo4j_test //graph/clients/qdrant:qdrant_test
 bazel test //agents/harness/impl:impl_test
 bazel test //agents/skills/ingest/robinhood/corporate_actions/parser:parser_test //agents/skills/ingest/robinhood/corporate_actions/classify:classify_test //agents/skills/ingest/robinhood/corporate_actions/ingest:ingest_test
-bazel test //api_server/impl:impl_test
+bazel test //api_server/impl:impl_test //api_server/di:di_test
 ```
 
 `GET /fold?q=square&qty=10` is the account-screen query. `GET /search?q=` ranks `Event.headline` in Qdrant. `api_server` injects Bolt and Qdrant at process start (`NEO4J_URI` / `QDRANT_URL`; in-cluster `bolt://neo4j:7687` / `http://qdrant:6333`).
