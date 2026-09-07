@@ -111,3 +111,13 @@ func TestAddrDefault(t *testing.T) {
 		t.Fatalf("nil addr = %q", got)
 	}
 }
+
+func TestSetAddr(t *testing.T) {
+	app := New(nil, nil, nil, nil)
+	app.SetAddr(":9090")
+	if got := app.Addr(); got != ":9090" {
+		t.Fatalf("addr = %q", got)
+	}
+	var nil_app *AppContext
+	nil_app.SetAddr(":1")
+}
