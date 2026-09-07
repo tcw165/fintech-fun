@@ -1,11 +1,16 @@
 # API process entrypoint. Lifecycle only; di wires impl.
-load("@rules_go//go:def.bzl", "go_binary")
+load("@rules_go//go:def.bzl", "go_binary", "go_library")
 
 go_binary(
     name = "api_server",
-    srcs = ["main.go"],
+    embed = [":cmd_lib"],
     visibility = ["//visibility:public"],
-    deps = [
-        "//api_server/di",
-    ],
+)
+
+go_library(
+    name = "cmd_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/tcw165/fintech-fun/api_server/cmd",
+    visibility = ["//visibility:private"],
+    deps = ["//api_server/di"],
 )

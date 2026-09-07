@@ -21,8 +21,8 @@ go_test(
         "runner_test.go",
         "sdk_test.go",
     ],
-    embed = [":impl"],
     deps = [
+        ":impl",
         "//agents/harness/contract",
         "//agents/harness/skillmd",
     ],

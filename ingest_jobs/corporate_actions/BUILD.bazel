@@ -1,15 +1,22 @@
 # Thin job binary. Lifecycle only; di wires harness + ingest skill.
-load("@rules_go//go:def.bzl", "go_binary")
+load("@rules_go//go:def.bzl", "go_binary", "go_library")
 
 go_binary(
     name = "corporate_actions",
-    srcs = ["main.go"],
+    embed = [":corporate_actions_lib"],
     visibility = ["//visibility:public"],
+)
+
+go_library(
+    name = "corporate_actions_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/tcw165/fintech-fun/ingest_jobs/corporate_actions",
+    visibility = ["//visibility:private"],
     deps = [
         "//agents/harness/contract",
         "//agents/harness/impl",
         "//agents/harness/skillmd",
-        "//agents/skills/ingest/robinhood/corporate_actions:corporate_actions",
+        "//agents/skills/ingest/robinhood/corporate_actions",
         "//ingest_jobs/di",
     ],
 )

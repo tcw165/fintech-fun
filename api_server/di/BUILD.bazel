@@ -12,12 +12,12 @@ go_library(
     deps = [
         "//api_server/contract",
         "//api_server/impl",
-        "//graph/clients/neo4j:neo4j",
-        "//graph/clients/neo4j/impl:impl",
-        "//graph/clients/qdrant:qdrant",
-        "//graph/clients/qdrant/impl:impl",
-        "//graph/embed:embed",
-        "//graph/embed/lexical:lexical",
+        "//graph/clients/neo4j",
+        "//graph/clients/neo4j/impl",
+        "//graph/clients/qdrant",
+        "//graph/clients/qdrant/impl",
+        "//graph/embed",
+        "//graph/embed/lexical",
     ],
 )
 
@@ -27,8 +27,8 @@ go_test(
     embed = [":di"],
     deps = [
         "//api_server/contract",
-        "//graph/clients/neo4j/impl:impl",
-        "//graph/clients/qdrant/impl:impl",
-        "//graph/embed/lexical:lexical",
+        "//graph/clients/neo4j/impl",
+        "//graph/clients/qdrant/impl",
+        "//graph/embed/lexical",
     ],
 )

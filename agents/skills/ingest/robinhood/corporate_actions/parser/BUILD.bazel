@@ -6,7 +6,7 @@ go_library(
     srcs = ["parser.go"],
     importpath = "github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/parser",
     visibility = ["//visibility:public"],
-    deps = ["//agents/skills/ingest/robinhood/corporate_actions:corporate_actions"],
+    deps = ["//agents/skills/ingest/robinhood/corporate_actions"],
 )
 
 go_test(
@@ -14,7 +14,7 @@ go_test(
     srcs = ["parser_test.go"],
     embed = [":parser"],
     deps = [
-        "//agents/skills/ingest/robinhood/corporate_actions/testdata:testdata",
-        "//graph:graph",
+        "//agents/skills/ingest/robinhood/corporate_actions/testdata",
+        "//graph",
     ],
 )

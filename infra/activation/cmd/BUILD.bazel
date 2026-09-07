@@ -1,10 +1,17 @@
 # Gap A HTTP proof entrypoint. Wires impl (DI).
-load("@rules_go//go:def.bzl", "go_binary")
+load("@rules_go//go:def.bzl", "go_binary", "go_library")
 
 go_binary(
     name = "activation",
-    srcs = ["main.go"],
+    embed = [":cmd_lib"],
     visibility = ["//visibility:public"],
+)
+
+go_library(
+    name = "cmd_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/tcw165/fintech-fun/infra/activation/cmd",
+    visibility = ["//visibility:private"],
     deps = [
         "//infra/activation/contract",
         "//infra/activation/impl",

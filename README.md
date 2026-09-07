@@ -87,7 +87,7 @@ Sync `BUILD.bazel` deps from Go imports: `just update-build-files` (`bazel run /
 Retail graph tests (no live cluster):
 
 ```bash
-bazel test //graph:schema_test //graph/fold:fold_test //graph/clients/neo4j:neo4j_test //graph/clients/qdrant:qdrant_test
+bazel test //graph:graph_test //graph/fold:fold_test //graph/clients/neo4j:neo4j_test //graph/clients/qdrant:qdrant_test
 bazel test //agents/harness/impl:impl_test
 bazel test //agents/skills/ingest/robinhood/corporate_actions/parser:parser_test //agents/skills/ingest/robinhood/corporate_actions/classify:classify_test //agents/skills/ingest/robinhood/corporate_actions/ingest:ingest_test
 bazel test //api_server/impl:impl_test //api_server/di:di_test
