@@ -1,0 +1,18 @@
+# Cobra tree for the corporate_actions job. Child of harness contract only via main.
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "cli",
+    srcs = ["cli.go"],
+    importpath = "github.com/tcw165/fintech-fun/ingest_jobs/corporate_actions/cli",
+    visibility = ["//ingest_jobs/corporate_actions:__pkg__"],
+    deps = [
+        "@com_github_spf13_cobra//:cobra",
+    ],
+)
+
+go_test(
+    name = "cli_test",
+    srcs = ["cli_test.go"],
+    embed = [":cli"],
+)
