@@ -39,7 +39,7 @@ func TestClosePropagatesError(t *testing.T) {
 	}
 }
 
-func TestNewSkillMapsClients(t *testing.T) {
+func TestNewMapsClients(t *testing.T) {
 	graph_db := &neo4jimpl.Recording{}
 	vector_db := &qdrantimpl.Recording{}
 	embedder := lexical.New()
@@ -47,21 +47,18 @@ func TestNewSkillMapsClients(t *testing.T) {
 	if app.graph_db != graph_db || app.vector_db != vector_db || app.embedder == nil {
 		t.Fatalf("clients not stored: %+v", app)
 	}
-	s := app.Skill()
-	if s.Graph != graph_db || s.Vectors != vector_db {
-		t.Fatalf("skill clients: %+v", s)
+	if app.Graph() != graph_db || app.Vectors() != vector_db || app.Embedder() == nil {
+		t.Fatalf("accessors: %+v", app)
 	}
-	ingest_agent := app.Agent()
-	if ingest_agent == nil {
+	if app.Agent() == nil {
 		t.Fatal("missing agent")
 	}
 }
 
-func TestSkillNilContext(t *testing.T) {
+func TestNilContextAccessors(t *testing.T) {
 	var app *AppContext
-	s := app.Skill()
-	if s.Graph != nil || s.Vectors != nil {
-		t.Fatalf("nil skill: %+v", s)
+	if app.Graph() != nil || app.Vectors() != nil || app.Embedder() != nil {
+		t.Fatalf("nil accessors: %+v", app)
 	}
 	if app.Agent() == nil {
 		t.Fatal("nil context should still build an agent")
@@ -90,12 +87,6 @@ func TestCommandGating(t *testing.T) {
 		{[]string{"verify"}, false, true},
 	}
 	for _, tc := range cases {
-		want_agent := tc.live && (len(tc.args) == 0 || tc.args[0] == "ingest" || tc.args[0] == "refresh")
-		if got := UsesAgent(tc.args); got != want_agent {
-			t.Fatalf("uses_agent(%v) = %v, want %v", tc.args, got, want_agent)
-		}
-	}
-	for _, tc := range cases {
 		if got := needs_live_clients(tc.args); got != tc.live {
 			t.Fatalf("needs_live_clients(%v) = %v, want %v", tc.args, got, tc.live)
 		}
@@ -117,8 +108,8 @@ func TestNewFromEnvOfflineLeavesClientsNil(t *testing.T) {
 		if app.embedder == nil {
 			t.Fatalf("%v missing embedder", args)
 		}
-		if app.Skill().Graph != nil || app.Skill().Vectors != nil {
-			t.Fatalf("%v skill clients set", args)
+		if app.Graph() != nil || app.Vectors() != nil {
+			t.Fatalf("%v clients set via accessors", args)
 		}
 	}
 }

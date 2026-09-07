@@ -70,11 +70,10 @@ Delete the profile: `just cluster-delete`.
 //graph/clients/neo4j/impl                              official Bolt driver + Recording
 //graph/clients/qdrant                                  contract: Client + collection protocol (no HTTP)
 //graph/clients/qdrant/impl                             official REST client + Recording
-//agents/harness/contract                             Skill, Runner interfaces
-//agents/harness/impl                                   default Runner → Skill.Run
-//agents/skills/ingest/robinhood/corporate_actions      models: hood_events + parser/classify/ingest/skill
-//ingest_jobs/di                                        composition root: AppContext + clients
-//ingest_jobs/corporate_actions                         thin job binary → harness + ingest skill
+//agents/skills/ingest/robinhood/corporate_actions      models: hood_events + parser/classify/ingest/dedup
+//agents/skills/ingest/robinhood/corporate_actions/agent custom ingest agent (prefix-dedup + pagination)
+//ingest_jobs/di                                        composition root: AppContext + ingest agent
+//ingest_jobs/corporate_actions                         thin job binary → cobra + tools dispatch
 //api_server/contract                                   HealthHandler interface
 //api_server/impl                                       HTTP /healthz
 //api_server/di                                         composition root: AppContext + clients
@@ -88,15 +87,14 @@ Retail graph tests (no live cluster):
 
 ```bash
 bazel test //graph:graph_test //graph/fold:fold_test //graph/clients/neo4j:neo4j_test //graph/clients/qdrant:qdrant_test
-bazel test //agents/harness/impl:impl_test
-bazel test //agents/skills/ingest/robinhood/corporate_actions/parser:parser_test //agents/skills/ingest/robinhood/corporate_actions/classify:classify_test //agents/skills/ingest/robinhood/corporate_actions/ingest:ingest_test
+bazel test //agents/skills/ingest/robinhood/corporate_actions/parser:parser_test //agents/skills/ingest/robinhood/corporate_actions/classify:classify_test //agents/skills/ingest/robinhood/corporate_actions/ingest:ingest_test //agents/skills/ingest/robinhood/corporate_actions/dedup:dedup_test //agents/skills/ingest/robinhood/corporate_actions/agent:agent_test
 bazel test //api_server/impl:impl_test //api_server/di:di_test
-bazel test //ingest_jobs/di:di_test
+bazel test //ingest_jobs/di:di_test //ingest_jobs/corporate_actions/tools:tools_test //ingest_jobs/corporate_actions/cli:cli_test
 ```
 
 `GET /fold?q=square&qty=10` is the account-screen query. `GET /search?q=` ranks `Event.headline` in Qdrant. `api_server` injects Bolt and Qdrant at process start (`NEO4J_URI` / `QDRANT_URL`; in-cluster `bolt://neo4j:7687` / `http://qdrant:6333`).
 
-The ingest job reads [Robinhood Corporate Actions Tracker](https://robinhood.com/us/en/support/articles/corporate-actions-tracker/) text day by day, classifies each row into `Event.kind`, and previews Neo4j/Qdrant writes. `ping` talks to a live cluster (defaults `bolt://localhost:7687` / `http://localhost:6333`, or `NEO4J_URI` / `QDRANT_URL`):
+The ingest job fetches the [Robinhood Corporate Actions Tracker](https://robinhood.com/us/en/support/articles/corporate-actions-tracker/) (full history each time), prefix-compares chronological fingerprints, and ingests only the new suffix, one calendar day per page. `ping` talks to a live cluster (defaults `bolt://localhost:7687` / `http://localhost:6333`, or `NEO4J_URI` / `QDRANT_URL`):
 
 ```bash
 bazel run //ingest_jobs/corporate_actions -- parse "$PWD/agents/skills/ingest/robinhood/corporate_actions/testdata/tracker_sept_2026.txt"

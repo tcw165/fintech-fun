@@ -23,7 +23,7 @@ func TestDefaultIngest(t *testing.T) {
 		t.Fatalf("empty: %v", err)
 	}
 	if got != nil {
-		t.Fatalf("got %v, want nil so SDK default-tool ingest applies", got)
+		t.Fatalf("got %v, want nil so tools default to ingest", got)
 	}
 }
 
