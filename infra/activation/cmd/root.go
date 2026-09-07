@@ -18,6 +18,7 @@ func new_root(checker contract.Checker, stdout io.Writer) *cobra.Command {
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}
+	root.CompletionOptions.DisableDefaultCmd = true
 	root.AddCommand(
 		new_step_cmd("healthz", "GET /healthz", []string{"health"}, cobra.ExactArgs(1), func(api string) error {
 			step := checker.Health(api)
