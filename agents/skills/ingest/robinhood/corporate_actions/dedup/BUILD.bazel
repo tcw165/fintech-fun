@@ -1,0 +1,23 @@
+# Prefix-dedup + pagination helpers. Child of hood_events + parser testdata.
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "dedup",
+    srcs = ["dedup.go"],
+    importpath = "github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/dedup",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//agents/skills/ingest/robinhood/corporate_actions",
+    ],
+)
+
+go_test(
+    name = "dedup_test",
+    srcs = ["dedup_test.go"],
+    embed = [":dedup"],
+    deps = [
+        "//agents/skills/ingest/robinhood/corporate_actions",
+        "//agents/skills/ingest/robinhood/corporate_actions/parser",
+        "//agents/skills/ingest/robinhood/corporate_actions/testdata",
+    ],
+)

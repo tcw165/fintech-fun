@@ -1,5 +1,5 @@
 # Models: TrackerRow, ClassifiedEvent. Pure data.
-# Children: parser, classify, ingest, testdata, skill, crawler. This module does not import them.
+# Children: parser, classify, ingest, dedup, testdata, skill, crawler. This module does not import them.
 load("@rules_go//go:def.bzl", "go_library")
 
 go_library(
