@@ -73,6 +73,7 @@ Delete the profile: `just cluster-delete`.
 //agents/harness/contract                             Skill, Runner interfaces
 //agents/harness/impl                                   default Runner → Skill.Run
 //agents/skills/ingest/robinhood/corporate_actions      models: hood_events + parser/classify/ingest/skill
+//ingest_jobs/di                                        composition root: AppContext + clients
 //ingest_jobs/corporate_actions                         thin job binary → harness + ingest skill
 //api_server/contract                                   HealthHandler interface
 //api_server/impl                                       HTTP /healthz
@@ -88,6 +89,7 @@ bazel test //graph:schema_test //graph/fold:fold_test //graph/clients/neo4j:neo4
 bazel test //agents/harness/impl:impl_test
 bazel test //agents/skills/ingest/robinhood/corporate_actions/parser:parser_test //agents/skills/ingest/robinhood/corporate_actions/classify:classify_test //agents/skills/ingest/robinhood/corporate_actions/ingest:ingest_test
 bazel test //api_server/impl:impl_test //api_server/di:di_test
+bazel test //ingest_jobs/di:di_test
 ```
 
 `GET /fold?q=square&qty=10` is the account-screen query. `GET /search?q=` ranks `Event.headline` in Qdrant. `api_server` injects Bolt and Qdrant at process start (`NEO4J_URI` / `QDRANT_URL`; in-cluster `bolt://neo4j:7687` / `http://qdrant:6333`).

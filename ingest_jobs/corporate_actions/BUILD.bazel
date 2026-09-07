@@ -1,4 +1,4 @@
-# Thin job binary. Imports harness + ingest skill; does not own pipeline logic.
+# Thin job binary. Lifecycle only; di wires harness + ingest skill.
 load("@rules_go//go:def.bzl", "go_binary")
 
 go_binary(
@@ -10,8 +10,6 @@ go_binary(
         "//agents/harness/impl",
         "//agents/harness/skillmd",
         "//agents/skills/ingest/robinhood/corporate_actions:corporate_actions",
-        "//agents/skills/ingest/robinhood/corporate_actions/skill",
-        "//graph/clients/neo4j/impl:impl",
-        "//graph/clients/qdrant/impl:impl",
+        "//ingest_jobs/di",
     ],
 )
