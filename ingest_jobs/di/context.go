@@ -4,6 +4,7 @@ package di
 import (
 	"context"
 
+	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/agent"
 	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/skill"
 	"github.com/tcw165/fintech-fun/graph/clients/neo4j"
 	"github.com/tcw165/fintech-fun/graph/clients/qdrant"
@@ -38,4 +39,18 @@ func (c *AppContext) Skill() skill.Skill {
 		return skill.Skill{}
 	}
 	return skill.Skill{Graph: c.graph_db, Vectors: c.vector_db}
+}
+
+func (c *AppContext) Agent() *agent.Agent {
+	if c == nil {
+		return agent.New(nil, nil, nil, nil)
+	}
+	return agent.New(c.graph_db, c.vector_db, c.embedder, agent.LiveFetcher{})
+}
+
+func UsesAgent(args []string) bool {
+	if len(args) == 0 {
+		return true
+	}
+	return args[0] == "ingest" || args[0] == "refresh"
 }

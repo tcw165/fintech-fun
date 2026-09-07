@@ -1,4 +1,4 @@
-# Thin job binary. Lifecycle only; di wires harness + ingest skill.
+# Thin job binary. Lifecycle only; di wires ingest agent + remaining skill tools.
 load("@rules_go//go:def.bzl", "go_binary", "go_library")
 
 go_binary(

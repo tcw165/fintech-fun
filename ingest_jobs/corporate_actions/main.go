@@ -1,4 +1,4 @@
-// Command corporate_actions runs the Robinhood corporate-actions ingest skill.
+// Command corporate_actions runs the Robinhood corporate-actions ingest job.
 package main
 
 import (
@@ -30,7 +30,7 @@ func main() {
 	}
 	manifest := impl.ManifestFrom(doc)
 	root := cli.New(func(args []string) error {
-		return run_skill(ctx, manifest, args)
+		return run(ctx, manifest, args)
 	})
 	if err := root.Execute(); err != nil {
 		var exit_err *exit_error
@@ -41,19 +41,64 @@ func main() {
 	}
 }
 
-func run_skill(ctx context.Context, manifest contract.Manifest, args []string) error {
+func run(ctx context.Context, manifest contract.Manifest, args []string) error {
 	app, err := di.NewFromEnv(ctx, args)
 	if err != nil {
 		return err
 	}
 	defer app.Close(ctx)
+	if di.UsesAgent(args) {
+		return run_agent(app, args)
+	}
+	return run_skill(ctx, app, manifest, args)
+}
+
+func run_agent(app *di.AppContext, args []string) error {
+	ingest_agent := app.Agent()
+	var payload map[string]any
+	switch {
+	case len(args) == 0 || args[0] == "ingest":
+		if len(args) > 1 {
+			data, err := os.ReadFile(args[1])
+			if err != nil {
+				return err
+			}
+			result, err := ingest_agent.IngestText(string(data))
+			if err != nil {
+				return err
+			}
+			payload = result.Payload()
+		} else {
+			result, err := ingest_agent.IngestLive("")
+			if err != nil {
+				return err
+			}
+			payload = result.Payload()
+		}
+	case args[0] == "refresh":
+		result, err := ingest_agent.Refresh("")
+		if err != nil {
+			return err
+		}
+		payload = result.Payload()
+	default:
+		return fmt.Errorf("unknown agent command %q", args[0])
+	}
+	return write_payload(payload)
+}
+
+func run_skill(ctx context.Context, app *di.AppContext, manifest contract.Manifest, args []string) error {
 	result, err := impl.NewSDK().Run(ctx, manifest, app.Skill().Tools(), contract.Request{Args: args})
 	if err != nil {
 		return err
 	}
+	return write_payload(result.Payload)
+}
+
+func write_payload(payload any) error {
 	enc := json.NewEncoder(os.Stdout)
 	enc.SetIndent("", "  ")
-	if err := enc.Encode(result.Payload); err != nil {
+	if err := enc.Encode(payload); err != nil {
 		return &exit_error{error: err, code: 1}
 	}
 	return nil
