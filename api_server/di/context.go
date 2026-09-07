@@ -44,6 +44,13 @@ func (c *AppContext) Addr() string {
 	return c.addr
 }
 
+func (c *AppContext) SetAddr(addr string) {
+	if c == nil {
+		return
+	}
+	c.addr = addr
+}
+
 func (c *AppContext) Handler() http.Handler {
 	var folder contract.Folder
 	var grapher contract.Grapher
