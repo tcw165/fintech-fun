@@ -18,8 +18,8 @@ type tool_spec struct {
 func New(run Run) *cobra.Command {
 	root := &cobra.Command{
 		Use:           "corporate_actions",
-		Short:         "Robinhood corporate-actions ingest skill",
-		Long:          "Parse, classify, ingest, and verify Robinhood tracker headlines. Empty args run ingest.",
+		Short:         "Robinhood corporate-actions ingest agent",
+		Long:          "Parse, classify, and ingest Robinhood tracker headlines. Empty args run the custom ingest agent.",
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		Args:          cobra.NoArgs,
@@ -41,10 +41,10 @@ func tools() []tool_spec {
 		{"plan", "plan <file>", "Plan ingest writes from a saved page", cobra.ExactArgs(1)},
 		{"fetch", "fetch [outfile]", "Fetch the live tracker page", cobra.MaximumNArgs(1)},
 		{"gold", "gold [file]", "Classify gold report from a file or live fetch", cobra.MaximumNArgs(1)},
-		{"ingest", "ingest [file]", "Ingest a file or the live tracker", cobra.MaximumNArgs(1)},
+		{"ingest", "ingest [file]", "Prefix-dedup ingest via the custom agent", cobra.MaximumNArgs(1)},
 		{"verify", "verify", "Verify memory gold and optional Bolt gold", cobra.NoArgs},
 		{"search", "search <query>", "Search Event headlines in Qdrant", cobra.MinimumNArgs(1)},
-		{"refresh", "refresh", "Live ingest plus waiting-policy metadata", cobra.NoArgs},
+		{"refresh", "refresh", "Live prefix-dedup ingest plus waiting-policy metadata", cobra.NoArgs},
 		{"ping", "ping", "Write NFLX fixture and read it back", cobra.NoArgs},
 		{"seed", "seed", "Seed Notion fixtures into Neo4j and Qdrant", cobra.NoArgs},
 		{"fold", "fold <q> <qty>", "Fold what a holder has now", cobra.ExactArgs(2)},

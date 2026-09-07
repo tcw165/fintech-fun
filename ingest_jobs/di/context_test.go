@@ -51,6 +51,10 @@ func TestNewSkillMapsClients(t *testing.T) {
 	if s.Graph != graph_db || s.Vectors != vector_db {
 		t.Fatalf("skill clients: %+v", s)
 	}
+	ingest_agent := app.Agent()
+	if ingest_agent == nil {
+		t.Fatal("missing agent")
+	}
 }
 
 func TestSkillNilContext(t *testing.T) {
@@ -58,6 +62,9 @@ func TestSkillNilContext(t *testing.T) {
 	s := app.Skill()
 	if s.Graph != nil || s.Vectors != nil {
 		t.Fatalf("nil skill: %+v", s)
+	}
+	if app.Agent() == nil {
+		t.Fatal("nil context should still build an agent")
 	}
 }
 
@@ -81,6 +88,12 @@ func TestCommandGating(t *testing.T) {
 		{[]string{"fold"}, true, false},
 		{[]string{"search"}, true, false},
 		{[]string{"verify"}, false, true},
+	}
+	for _, tc := range cases {
+		want_agent := tc.live && (len(tc.args) == 0 || tc.args[0] == "ingest" || tc.args[0] == "refresh")
+		if got := UsesAgent(tc.args); got != want_agent {
+			t.Fatalf("uses_agent(%v) = %v, want %v", tc.args, got, want_agent)
+		}
 	}
 	for _, tc := range cases {
 		if got := needs_live_clients(tc.args); got != tc.live {
