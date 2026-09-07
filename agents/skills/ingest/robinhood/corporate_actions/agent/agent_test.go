@@ -26,7 +26,7 @@ func new_memory_store() *memory_store {
 }
 
 func (s *memory_store) Run(cypher string, params map[string]any) ([]map[string]any, error) {
-	if strings.Contains(cypher, "RETURN e.id AS id") {
+	if strings.Contains(cypher, "MATCH (e:Event) RETURN e.id AS id") {
 		var rows []map[string]any
 		for id := range s.ids {
 			rows = append(rows, map[string]any{"id": id})
