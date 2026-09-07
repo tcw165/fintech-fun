@@ -63,9 +63,10 @@ type IngestResult struct {
 }
 
 type SourceWatermark struct {
-	ID         string
-	PageSHA256 string
-	FetchedAt  any
+	ID            string
+	PageSHA256    string
+	FetchedAt     any
+	HistoryPrefix []string
 }
 
 func ListEventIDs(client Client) (map[string]bool, error) {
@@ -95,13 +96,43 @@ func ReadSource(client Client, id string) (SourceWatermark, error) {
 		out.PageSHA256 = hash
 	}
 	out.FetchedAt = rows[0]["fetched_at"]
+	out.HistoryPrefix = asStringSlice(rows[0]["history_prefix"])
 	return out, nil
+}
+
+func asStringSlice(value any) []string {
+	switch items := value.(type) {
+	case []string:
+		return append([]string(nil), items...)
+	case []any:
+		out := make([]string, 0, len(items))
+		for _, item := range items {
+			if s, ok := item.(string); ok {
+				out = append(out, s)
+			}
+		}
+		return out
+	default:
+		return nil
+	}
 }
 
 func UpsertSource(client Client, id, pageSHA256 string) error {
 	_, err := client.Run(UpsertSourceCypher(), map[string]any{
 		"id":           id,
 		"page_sha256":  pageSHA256,
+	})
+	return err
+}
+
+func UpsertSourceState(client Client, id, pageSHA256 string, historyPrefix []string) error {
+	if historyPrefix == nil {
+		historyPrefix = []string{}
+	}
+	_, err := client.Run(UpsertSourceStateCypher(), map[string]any{
+		"id":             id,
+		"page_sha256":    pageSHA256,
+		"history_prefix": historyPrefix,
 	})
 	return err
 }
