@@ -10,7 +10,7 @@ go_library(
 )
 
 go_test(
-    name = "schema_test",
+    name = "graph_test",
     srcs = ["schema_test.go"],
     embed = [":graph"],
 )

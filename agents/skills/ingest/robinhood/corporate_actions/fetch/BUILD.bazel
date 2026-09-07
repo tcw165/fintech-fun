@@ -6,7 +6,7 @@ go_library(
     srcs = ["fetch.go"],
     importpath = "github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/fetch",
     visibility = ["//visibility:public"],
-    deps = ["//agents/skills/ingest/robinhood/corporate_actions:corporate_actions"],
+    deps = ["//agents/skills/ingest/robinhood/corporate_actions"],
 )
 
 go_test(

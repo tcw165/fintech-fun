@@ -13,21 +13,21 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//api_server/contract",
-        "//graph:graph",
-        "//graph/clients/neo4j:neo4j",
-        "//graph/clients/qdrant:qdrant",
-        "//graph/embed:embed",
+        "//graph",
+        "//graph/clients/neo4j",
+        "//graph/clients/qdrant",
+        "//graph/embed",
     ],
 )
 
 go_test(
     name = "impl_test",
     srcs = ["server_test.go"],
-    embed = [":impl"],
     deps = [
+        ":impl",
         "//api_server/contract",
-        "//graph/clients/neo4j/impl:impl",
-        "//graph/clients/qdrant/impl:impl",
-        "//graph/embed/lexical:lexical",
+        "//graph/clients/neo4j/impl",
+        "//graph/clients/qdrant/impl",
+        "//graph/embed/lexical",
     ],
 )

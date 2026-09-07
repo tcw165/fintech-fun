@@ -11,12 +11,12 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//agents/skills/ingest/robinhood/corporate_actions/skill",
-        "//graph/clients/neo4j:neo4j",
-        "//graph/clients/neo4j/impl:impl",
-        "//graph/clients/qdrant:qdrant",
-        "//graph/clients/qdrant/impl:impl",
-        "//graph/embed:embed",
-        "//graph/embed/lexical:lexical",
+        "//graph/clients/neo4j",
+        "//graph/clients/neo4j/impl",
+        "//graph/clients/qdrant",
+        "//graph/clients/qdrant/impl",
+        "//graph/embed",
+        "//graph/embed/lexical",
     ],
 )
 
@@ -25,8 +25,8 @@ go_test(
     srcs = ["context_test.go"],
     embed = [":di"],
     deps = [
-        "//graph/clients/neo4j/impl:impl",
-        "//graph/clients/qdrant/impl:impl",
-        "//graph/embed/lexical:lexical",
+        "//graph/clients/neo4j/impl",
+        "//graph/clients/qdrant/impl",
+        "//graph/embed/lexical",
     ],
 )

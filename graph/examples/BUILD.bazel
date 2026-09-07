@@ -6,7 +6,7 @@ go_library(
     srcs = ["examples.go"],
     importpath = "github.com/tcw165/fintech-fun/graph/examples",
     visibility = ["//visibility:public"],
-    deps = ["//graph:graph"],
+    deps = ["//graph"],
 )
 
 go_test(

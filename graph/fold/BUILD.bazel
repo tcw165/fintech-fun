@@ -11,8 +11,8 @@ go_library(
     importpath = "github.com/tcw165/fintech-fun/graph/fold",
     visibility = ["//visibility:public"],
     deps = [
-        "//graph:graph",
-        "//graph/examples:examples",
+        "//graph",
+        "//graph/examples",
     ],
 )
 
@@ -25,7 +25,7 @@ go_test(
     ],
     embed = [":fold"],
     deps = [
-        "//graph:graph",
-        "//graph/examples:examples",
+        "//graph",
+        "//graph/examples",
     ],
 )
