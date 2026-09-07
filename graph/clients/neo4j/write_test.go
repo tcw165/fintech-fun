@@ -80,7 +80,7 @@ func TestListEventIDsAndReadSource(t *testing.T) {
 		t.Fatalf("%v %v", ids, err)
 	}
 	wm, err := ReadSource(&stub, graph.IngestSourceCorporateActions)
-	if err != nil || wm.PageSHA256 != "" || wm.ID != graph.IngestSourceCorporateActions {
+	if err != nil || wm.PageSHA256 != "" || wm.ID != graph.IngestSourceCorporateActions || wm.HistoryPrefix != nil {
 		t.Fatalf("%+v %v", wm, err)
 	}
 	if err := UpsertSource(&stub, graph.IngestSourceCorporateActions, "abc"); err != nil {
@@ -89,6 +89,94 @@ func TestListEventIDsAndReadSource(t *testing.T) {
 	if len(stub.calls) != 3 {
 		t.Fatalf("calls %d", len(stub.calls))
 	}
+	if strings.Contains(stub.calls[2].cypher, "history_prefix") {
+		t.Fatal("UpsertSource must not write history_prefix")
+	}
+}
+
+func TestReadSourceHistoryPrefixFromStringSlice(t *testing.T) {
+	client := sourceClient(map[string]any{
+		"page_sha256":    "abc",
+		"fetched_at":     "now",
+		"history_prefix": []string{"2026-09-03|APH|split", "2026-09-04|LPSN|merger"},
+	})
+	wm, err := ReadSource(client, graph.IngestSourceCorporateActions)
+	if err != nil || wm.PageSHA256 != "abc" || len(wm.HistoryPrefix) != 2 {
+		t.Fatalf("%+v %v", wm, err)
+	}
+	if wm.HistoryPrefix[0] != "2026-09-03|APH|split" || wm.HistoryPrefix[1] != "2026-09-04|LPSN|merger" {
+		t.Fatalf("%v", wm.HistoryPrefix)
+	}
+}
+
+func TestReadSourceHistoryPrefixFromAnySlice(t *testing.T) {
+	client := sourceClient(map[string]any{
+		"page_sha256":    "def",
+		"history_prefix": []any{"a", 1, "b"},
+	})
+	wm, err := ReadSource(client, "src")
+	if err != nil || wm.PageSHA256 != "def" || len(wm.HistoryPrefix) != 2 || wm.HistoryPrefix[0] != "a" || wm.HistoryPrefix[1] != "b" {
+		t.Fatalf("%+v %v", wm, err)
+	}
+}
+
+func TestUpsertSourceStateWritesPrefix(t *testing.T) {
+	var stub stubClient
+	prefix := []string{"2026-09-03|APH|x"}
+	if err := UpsertSourceState(&stub, graph.IngestSourceCorporateActions, "hash", prefix); err != nil {
+		t.Fatal(err)
+	}
+	if len(stub.calls) != 1 {
+		t.Fatalf("calls %d", len(stub.calls))
+	}
+	params := stub.calls[0].params
+	if params["page_sha256"] != "hash" {
+		t.Fatalf("%v", params)
+	}
+	got, ok := params["history_prefix"].([]string)
+	if !ok || len(got) != 1 || got[0] != prefix[0] {
+		t.Fatalf("%v", params["history_prefix"])
+	}
+	for _, needle := range []string{"history_prefix", "page_sha256"} {
+		if !strings.Contains(stub.calls[0].cypher, needle) {
+			t.Fatalf("missing %s", needle)
+		}
+	}
+}
+
+func TestUpsertSourceStateNilPrefixBecomesEmpty(t *testing.T) {
+	var stub stubClient
+	if err := UpsertSourceState(&stub, "src", "hash", nil); err != nil {
+		t.Fatal(err)
+	}
+	got, ok := stub.calls[0].params["history_prefix"].([]string)
+	if !ok || got == nil || len(got) != 0 {
+		t.Fatalf("%v", stub.calls[0].params["history_prefix"])
+	}
+}
+
+func TestUpsertSourceStateCypherSetsPrefix(t *testing.T) {
+	query := UpsertSourceStateCypher()
+	for _, needle := range []string{"history_prefix", "page_sha256", "fetched_at"} {
+		if !strings.Contains(query, needle) {
+			t.Fatalf("missing %s", needle)
+		}
+	}
+	if !strings.Contains(ReadSourceCypher(), "history_prefix") {
+		t.Fatal("ReadSourceCypher must return history_prefix")
+	}
+}
+
+func sourceClient(row map[string]any) Client {
+	return sourceStub{row: row}
+}
+
+type sourceStub struct {
+	row map[string]any
+}
+
+func (s sourceStub) Run(string, map[string]any) ([]map[string]any, error) {
+	return []map[string]any{s.row}, nil
 }
 
 func TestApplyConstraints(t *testing.T) {

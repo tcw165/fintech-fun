@@ -131,7 +131,7 @@ func ListEventIDsCypher() string {
 }
 
 func ReadSourceCypher() string {
-	return `MATCH (s:IngestSource {id: $id}) RETURN s.page_sha256 AS page_sha256, s.fetched_at AS fetched_at`
+	return `MATCH (s:IngestSource {id: $id}) RETURN s.page_sha256 AS page_sha256, s.fetched_at AS fetched_at, s.history_prefix AS history_prefix`
 }
 
 func UpsertSourceCypher() string {
@@ -139,6 +139,14 @@ func UpsertSourceCypher() string {
 SET s.page_sha256 = $page_sha256,
     s.fetched_at = datetime()
 RETURN s.id AS id, s.page_sha256 AS page_sha256`
+}
+
+func UpsertSourceStateCypher() string {
+	return `MERGE (s:IngestSource {id: $id})
+SET s.page_sha256 = $page_sha256,
+    s.history_prefix = $history_prefix,
+    s.fetched_at = datetime()
+RETURN s.id AS id, s.page_sha256 AS page_sha256, s.history_prefix AS history_prefix`
 }
 
 func UpsertEventCypher() string {
