@@ -17,6 +17,7 @@ go_library(
         "//agents/harness/impl",
         "//agents/harness/skillmd",
         "//agents/skills/ingest/robinhood/corporate_actions",
+        "//ingest_jobs/corporate_actions/cli",
         "//ingest_jobs/di",
     ],
 )
