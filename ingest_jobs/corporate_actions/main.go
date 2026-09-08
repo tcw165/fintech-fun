@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/spf13/cobra"
 	"github.com/tcw165/fintech-fun/ingest_jobs/corporate_actions/request"
 	"github.com/tcw165/fintech-fun/ingest_jobs/corporate_actions/tools"
 	"github.com/tcw165/fintech-fun/ingest_jobs/di"
@@ -19,9 +20,11 @@ type exit_error struct {
 	code int
 }
 
+type run_func func(req request.Request) error
+
 func main() {
 	ctx := context.Background()
-	root := new_root(func(req request.Request) error {
+	if err := cmd(func(req request.Request) error {
 		app, err := di.Boot(
 			ctx,
 			di.ClientName(req.Name, req.DryRun),
@@ -43,14 +46,66 @@ func main() {
 			return err
 		}
 		return write_result(os.Stdout, req.DryRun, payload)
-	})
-	if err := root.Execute(); err != nil {
+	}).Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		var exit_err *exit_error
 		if errors.As(err, &exit_err) {
 			os.Exit(exit_err.code)
 		}
 		os.Exit(2)
+	}
+}
+
+func cmd(run run_func) *cobra.Command {
+	var dry_run bool
+	var file string
+	run_ingest := func(*cobra.Command, []string) error {
+		return run(request.Request{
+			Name:   "ingest",
+			File:   file,
+			DryRun: dry_run,
+		})
+	}
+	cmd := &cobra.Command{
+		Use:           "corporate_actions",
+		Short:         "Robinhood corporate-actions ingest",
+		Long:          "Fetch or read a tracker page, classify headlines, and ingest. --dry-run runs the same path without writing to Neo4j or Qdrant.",
+		SilenceUsage:  true,
+		SilenceErrors: true,
+		Args:          cobra.NoArgs,
+		RunE:          run_ingest,
+	}
+	cmd.Flags().BoolVar(
+		&dry_run,
+		"dry-run",
+		false,
+		"run E2E without writing to Neo4j or Qdrant",
+	)
+	cmd.Flags().StringVarP(
+		&file,
+		"file",
+		"f",
+		"",
+		"tracker page file (default: fetch live)",
+	)
+	cmd.CompletionOptions.DisableDefaultCmd = true
+	cmd.AddCommand(
+		new_named_cmd("refresh", "Live prefix-dedup ingest plus waiting-policy metadata", run),
+		new_named_cmd("ping", "Write NFLX fixture and read it back", run),
+		new_named_cmd("seed", "Seed Notion fixtures into Neo4j and Qdrant", run),
+		new_named_cmd("verify", "Verify memory gold and optional Bolt gold", run),
+	)
+	return cmd
+}
+
+func new_named_cmd(name, short string, run run_func) *cobra.Command {
+	return &cobra.Command{
+		Use:   name,
+		Short: short,
+		Args:  cobra.NoArgs,
+		RunE: func(*cobra.Command, []string) error {
+			return run(request.Request{Name: name})
+		},
 	}
 }
 

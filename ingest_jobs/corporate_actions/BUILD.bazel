@@ -9,10 +9,7 @@ go_binary(
 
 go_library(
     name = "corporate_actions_lib",
-    srcs = [
-        "main.go",
-        "root.go",
-    ],
+    srcs = ["main.go"],
     importpath = "github.com/tcw165/fintech-fun/ingest_jobs/corporate_actions",
     visibility = ["//visibility:private"],
     deps = [
@@ -25,7 +22,7 @@ go_library(
 
 go_test(
     name = "corporate_actions_test",
-    srcs = ["root_test.go"],
+    srcs = ["cmd_test.go"],
     embed = [":corporate_actions_lib"],
     deps = ["//ingest_jobs/corporate_actions/request"],
 )
