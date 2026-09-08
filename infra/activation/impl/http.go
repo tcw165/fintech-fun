@@ -13,12 +13,12 @@ import (
 )
 
 type HTTP struct {
-	Client *http.Client
+	http_client *http.Client
 }
 
 func (h HTTP) client() *http.Client {
-	if h.Client != nil {
-		return h.Client
+	if h.http_client != nil {
+		return h.http_client
 	}
 	return &http.Client{Timeout: 15 * time.Second}
 }
@@ -42,12 +42,12 @@ func (h HTTP) Smoke(api string) contract.Report {
 	query := url.QueryEscape("LivePerson stock merger")
 	steps := []contract.Step{
 		h.Health(api),
-		h.requireOK(api+"/fold?q=square&qty=10", "fold"),
-		h.requireOK(api+"/search?q="+query, "search"),
-		h.requireOK(api+"/v1/graph?q=square", "graph"),
-		h.requireOK(api+"/v1/graph/source", "source"),
-		h.requireOK(api+"/v1/graph/fold?q=square&qty=10", "v1/fold"),
-		h.requireOK(api+"/v1/graph/search?q=LPSN", "v1/search"),
+		h.require_ok(api+"/fold?q=square&qty=10", "fold"),
+		h.require_ok(api+"/search?q="+query, "search"),
+		h.require_ok(api+"/v1/graph?q=square", "graph"),
+		h.require_ok(api+"/v1/graph/source", "source"),
+		h.require_ok(api+"/v1/graph/fold?q=square&qty=10", "v1/fold"),
+		h.require_ok(api+"/v1/graph/search?q=LPSN", "v1/search"),
 	}
 	report := contract.Report{Status: "ok", Steps: steps}
 	if !report.AllOK() {
@@ -72,7 +72,7 @@ func (h HTTP) Gold(api string) contract.Report {
 			steps = append(steps, step)
 			continue
 		}
-		check := fold.MatchRows(asRows(body["rows"]), want)
+		check := fold.MatchRows(as_rows(body["rows"]), want)
 		step.OK = check.OK
 		if !check.OK {
 			step.Detail = fmt.Sprintf("%s qty=%v cash=%v", check.Error, check.GotQty, check.GotCash)
@@ -86,7 +86,7 @@ func (h HTTP) Gold(api string) contract.Report {
 	return report
 }
 
-func asRows(value any) []map[string]any {
+func as_rows(value any) []map[string]any {
 	switch typed := value.(type) {
 	case []map[string]any:
 		return typed
@@ -103,8 +103,8 @@ func asRows(value any) []map[string]any {
 	}
 }
 
-func (h HTTP) requireOK(rawURL, name string) contract.Step {
-	code, body, err := h.get(rawURL)
+func (h HTTP) require_ok(raw_url, name string) contract.Step {
+	code, body, err := h.get(raw_url)
 	step := contract.Step{Name: name}
 	if err != nil {
 		step.Detail = err.Error()
@@ -118,8 +118,8 @@ func (h HTTP) requireOK(rawURL, name string) contract.Step {
 	return step
 }
 
-func (h HTTP) get(rawURL string) (int, map[string]any, error) {
-	resp, err := h.client().Get(rawURL)
+func (h HTTP) get(raw_url string) (int, map[string]any, error) {
+	resp, err := h.client().Get(raw_url)
 	if err != nil {
 		return 0, nil, err
 	}
