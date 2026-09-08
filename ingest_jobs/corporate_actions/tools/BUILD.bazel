@@ -14,7 +14,7 @@ go_library(
         "//graph/embed",
         "//graph/examples",
         "//graph/fold",
-        "//ingest_jobs/corporate_actions/request",
+        "//ingest_jobs/corporate_actions/cli_params",
     ],
 )
 
@@ -30,6 +30,6 @@ go_test(
         "//graph/clients/qdrant",
         "//graph/clients/qdrant/impl",
         "//graph/embed/lexical",
-        "//ingest_jobs/corporate_actions/request",
+        "//ingest_jobs/corporate_actions/cli_params",
     ],
 )

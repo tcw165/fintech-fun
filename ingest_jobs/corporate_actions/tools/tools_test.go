@@ -12,7 +12,7 @@ import (
 	"github.com/tcw165/fintech-fun/graph/clients/qdrant"
 	qdrantimpl "github.com/tcw165/fintech-fun/graph/clients/qdrant/impl"
 	"github.com/tcw165/fintech-fun/graph/embed/lexical"
-	"github.com/tcw165/fintech-fun/ingest_jobs/corporate_actions/request"
+	"github.com/tcw165/fintech-fun/ingest_jobs/corporate_actions/cli_params"
 )
 
 func test_deps(graph_db neo4j.Client, vector_db qdrant.Client) Deps {
@@ -27,7 +27,7 @@ func test_deps(graph_db neo4j.Client, vector_db qdrant.Client) Deps {
 func TestPingUsesInjectedClients(t *testing.T) {
 	graph_db := &neo4jimpl.Recording{}
 	vector_db := &qdrantimpl.Recording{}
-	payload, err := Run(test_deps(graph_db, vector_db), request.Request{Name: "ping"})
+	payload, err := Run(test_deps(graph_db, vector_db), cli_params.Request{Name: "ping"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,7 +43,7 @@ func TestPingUsesInjectedClients(t *testing.T) {
 func TestSeedWritesSixFixtures(t *testing.T) {
 	graph_db := &neo4jimpl.Recording{}
 	vector_db := &qdrantimpl.Recording{}
-	payload, err := Run(test_deps(graph_db, vector_db), request.Request{Name: "seed"})
+	payload, err := Run(test_deps(graph_db, vector_db), cli_params.Request{Name: "seed"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -57,7 +57,7 @@ func TestSeedWritesSixFixtures(t *testing.T) {
 }
 
 func TestIngestMissingFile(t *testing.T) {
-	_, err := Run(test_deps(&neo4jimpl.Recording{}, &qdrantimpl.Recording{}), request.Request{Name: "ingest", File: "missing-file-for-error"})
+	_, err := Run(test_deps(&neo4jimpl.Recording{}, &qdrantimpl.Recording{}), cli_params.Request{Name: "ingest", File: "missing-file-for-error"})
 	if err == nil {
 		t.Fatal("expected missing file")
 	}
@@ -65,7 +65,7 @@ func TestIngestMissingFile(t *testing.T) {
 
 func TestIngestFileUsesAgentPrefixDedup(t *testing.T) {
 	path := write_temp(t, testdata.TrackerSept2026)
-	payload, err := Run(test_deps(&neo4jimpl.Recording{}, &qdrantimpl.Recording{}), request.Request{Name: "ingest", File: path})
+	payload, err := Run(test_deps(&neo4jimpl.Recording{}, &qdrantimpl.Recording{}), cli_params.Request{Name: "ingest", File: path})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -84,7 +84,7 @@ func TestIngestFileUsesAgentPrefixDedup(t *testing.T) {
 
 func TestIngestDryRunPlansWithoutClients(t *testing.T) {
 	path := write_temp(t, testdata.TrackerSept2026)
-	payload, err := Run(Deps{}, request.Request{Name: "ingest", File: path, DryRun: true})
+	payload, err := Run(Deps{}, cli_params.Request{Name: "ingest", File: path, DryRun: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -104,7 +104,7 @@ func TestIngestDryRunDoesNotWrite(t *testing.T) {
 	vector_db := &qdrantimpl.Recording{}
 	payload, err := Run(
 		test_deps(graph_db, vector_db),
-		request.Request{Name: "ingest", File: path, DryRun: true},
+		cli_params.Request{Name: "ingest", File: path, DryRun: true},
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -133,14 +133,14 @@ func contains_write(cypher string) bool {
 }
 
 func TestRefreshRequiresClients(t *testing.T) {
-	_, err := Run(Deps{}, request.Request{Name: "refresh"})
+	_, err := Run(Deps{}, cli_params.Request{Name: "refresh"})
 	if err == nil {
 		t.Fatal("expected error")
 	}
 }
 
 func TestVerifyMatchesNotionTables(t *testing.T) {
-	payload, err := Run(Deps{}, request.Request{Name: "verify"})
+	payload, err := Run(Deps{}, cli_params.Request{Name: "verify"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -152,7 +152,7 @@ func TestVerifyMatchesNotionTables(t *testing.T) {
 
 func TestVerifyIncludesBoltWhenGraphSet(t *testing.T) {
 	graph_db := &neo4jimpl.Recording{}
-	payload, err := Run(Deps{GraphClient: graph_db}, request.Request{Name: "verify"})
+	payload, err := Run(Deps{GraphClient: graph_db}, cli_params.Request{Name: "verify"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -185,7 +185,7 @@ func TestVerifyBoltGoldMatchesFoldRows(t *testing.T) {
 		}
 		return nil, nil
 	})
-	payload, err := Run(Deps{GraphClient: graph_db}, request.Request{Name: "verify"})
+	payload, err := Run(Deps{GraphClient: graph_db}, cli_params.Request{Name: "verify"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -198,21 +198,21 @@ func TestVerifyBoltGoldFailsOnMismatch(t *testing.T) {
 	graph_db := neo4jimpl.Func(func(string, map[string]any) ([]map[string]any, error) {
 		return []map[string]any{{"company": "Wrong", "ticker_now": "NOPE", "qty_now": 1.0}}, nil
 	})
-	_, err := Run(Deps{GraphClient: graph_db}, request.Request{Name: "verify"})
+	_, err := Run(Deps{GraphClient: graph_db}, cli_params.Request{Name: "verify"})
 	if err == nil {
 		t.Fatal("expected bolt gold failure")
 	}
 }
 
 func TestPingRequiresClients(t *testing.T) {
-	_, err := Run(Deps{}, request.Request{Name: "ping"})
+	_, err := Run(Deps{}, cli_params.Request{Name: "ping"})
 	if err == nil {
 		t.Fatal("expected error")
 	}
 }
 
 func TestUnknownCommand(t *testing.T) {
-	_, err := Run(Deps{}, request.Request{Name: "nope"})
+	_, err := Run(Deps{}, cli_params.Request{Name: "nope"})
 	if err == nil {
 		t.Fatal("expected unknown command")
 	}
