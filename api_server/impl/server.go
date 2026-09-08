@@ -47,7 +47,7 @@ func New(handler contract.Handler, folder contract.Folder, searcher contract.Sea
 			_ = json.NewEncoder(w).Encode(map[string]string{"status": "unavailable"})
 			return
 		}
-		q := strings.TrimSpace(r.URL.Query().Get("q"))
+		q := strings.Join(strings.Fields(r.URL.Query().Get("q")), " ")
 		if q == "" {
 			w.WriteHeader(http.StatusBadRequest)
 			_ = json.NewEncoder(w).Encode(map[string]string{"status": "bad_request"})

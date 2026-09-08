@@ -120,7 +120,12 @@ func (s *stub_search) Search(query string) (contract.SearchResponse, error) {
 
 func TestSearchQuery(t *testing.T) {
 	stub := &stub_search{resp: contract.SearchResponse{Status: "ok", Query: "LivePerson stock merger", Hits: []any{"LPSN"}}}
-	srv := httptest.NewServer(impl.New(impl.StaticOK{}, nil, stub, nil))
+	srv := httptest.NewServer(impl.New(
+		impl.StaticOK{},
+		nil,
+		stub,
+		nil,
+	))
 	t.Cleanup(srv.Close)
 	resp, err := http.Get(srv.URL + "/search?q=LivePerson+stock+merger")
 	if err != nil {
@@ -136,6 +141,25 @@ func TestSearchQuery(t *testing.T) {
 	}
 	if stub.q != "LivePerson stock merger" || body.Query != stub.q {
 		t.Fatalf("%+v %+v", stub, body)
+	}
+}
+
+func TestSearchMultilineQuery(t *testing.T) {
+	stub := &stub_search{resp: contract.SearchResponse{Status: "ok", Query: "LivePerson stock merger"}}
+	srv := httptest.NewServer(impl.New(
+		impl.StaticOK{},
+		nil,
+		stub,
+		nil,
+	))
+	t.Cleanup(srv.Close)
+	resp, err := http.Get(srv.URL + "/search?q=LivePerson%0Astock%0Amerger")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK || stub.q != "LivePerson stock merger" {
+		t.Fatalf("status=%d q=%q", resp.StatusCode, stub.q)
 	}
 }
 
@@ -252,11 +276,28 @@ func TestNeo4jGraphIssuesCypher(t *testing.T) {
 
 func TestQdrantSearchUsesRecording(t *testing.T) {
 	vectors := &qdrantimpl.Recording{}
-	out, err := impl.QdrantSearch{VectorsClient: vectors, Embedder: lexical.New()}.Search("LivePerson stock merger")
+	out, err := impl.QdrantSearch{
+		VectorsClient: vectors,
+		Embedder:      lexical.New(),
+	}.Search("LivePerson stock merger")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if out.Query != "LivePerson stock merger" || out.Status != "ok" || out.Hits == nil {
+		t.Fatalf("%+v", out)
+	}
+}
+
+func TestQdrantSearchCollapsesMultilineQuery(t *testing.T) {
+	vectors := &qdrantimpl.Recording{}
+	out, err := impl.QdrantSearch{
+		VectorsClient: vectors,
+		Embedder:      lexical.New(),
+	}.Search("LivePerson\nstock\nmerger")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if out.Query != "LivePerson stock merger" {
 		t.Fatalf("%+v", out)
 	}
 }

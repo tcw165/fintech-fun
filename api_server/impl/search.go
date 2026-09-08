@@ -1,6 +1,8 @@
 package impl
 
 import (
+	"strings"
+
 	"github.com/tcw165/fintech-fun/api_server/contract"
 	"github.com/tcw165/fintech-fun/graph/clients/qdrant"
 	"github.com/tcw165/fintech-fun/graph/embed"
@@ -16,6 +18,7 @@ func (s QdrantSearch) Search(query string) (contract.SearchResponse, error) {
 	if s.VectorsClient == nil || s.Embedder == nil {
 		return contract.SearchResponse{}, err_no_search
 	}
+	query = strings.Join(strings.Fields(query), " ")
 	vecs, err := s.Embedder.Embed([]string{query})
 	if err != nil {
 		return contract.SearchResponse{}, err
