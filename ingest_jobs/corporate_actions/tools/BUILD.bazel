@@ -30,7 +30,6 @@ go_test(
     deps = [
         "//agents/skills/ingest/robinhood/corporate_actions/agent",
         "//agents/skills/ingest/robinhood/corporate_actions/classify",
-        "//agents/skills/ingest/robinhood/corporate_actions/ingest",
         "//agents/skills/ingest/robinhood/corporate_actions/parser",
         "//agents/skills/ingest/robinhood/corporate_actions/testdata",
         "//graph/clients/neo4j",

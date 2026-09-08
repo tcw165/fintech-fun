@@ -94,13 +94,13 @@ func provide_app(
 }
 
 // ClientName maps a parsed Request onto the Fx graph key.
-// ingest --dry-run uses the offline plan graph.
+// ingest --dry-run uses optional clients so E2E can read without failing offline.
 func ClientName(
 	name string,
 	dry_run bool,
 ) string {
 	if dry_run && (name == "" || name == "ingest") {
-		return "plan"
+		return "dry-run"
 	}
 	return name
 }

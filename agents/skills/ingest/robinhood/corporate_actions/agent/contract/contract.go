@@ -20,6 +20,7 @@ type Result struct {
 	Duplicates    int
 	Skipped       int
 	Unchanged     bool
+	DryRun        bool
 	PageSHA256    string
 	Companies     []string
 	Stocks        []string
@@ -49,6 +50,9 @@ func (r Result) Payload() map[string]any {
 		"suffix":        r.Suffix,
 		"pages":         r.Pages,
 		"history_len":   r.HistoryLen,
+	}
+	if r.DryRun {
+		out["dry_run"] = true
 	}
 	if r.Backfilled {
 		out["backfilled"] = true

@@ -15,7 +15,7 @@ func needs_live_clients(name string) bool {
 }
 
 func wants_optional_clients(name string) bool {
-	return name == "verify"
+	return name == "verify" || name == "dry-run"
 }
 
 func NewFromEnv(
