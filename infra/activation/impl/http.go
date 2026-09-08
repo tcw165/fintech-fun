@@ -39,7 +39,9 @@ func (h HTTP) Health(api string) contract.Step {
 }
 
 func (h HTTP) Smoke(api string) contract.Report {
-	query := url.QueryEscape("LivePerson stock merger")
+	query := url.QueryEscape(
+		"LivePerson stock merger",
+	)
 	steps := []contract.Step{
 		h.Health(api),
 		h.require_ok(api+"/fold?q=square&qty=10", "fold"),
