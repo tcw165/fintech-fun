@@ -22,7 +22,10 @@ func TestRootListenAndServeAlias(t *testing.T) {
 		got = addr
 		return nil
 	})
-	cmd.SetArgs([]string{"--port", "9090"})
+	cmd.SetArgs([]string{
+		"--port",
+		"9090",
+	})
 	if err := cmd.Execute(); err != nil {
 		t.Fatalf("root: %v", err)
 	}
@@ -34,7 +37,11 @@ func TestRootListenAndServeAlias(t *testing.T) {
 		got = addr
 		return nil
 	})
-	cmd.SetArgs([]string{"serve", "--port", "7070"})
+	cmd.SetArgs([]string{
+		"serve",
+		"--port",
+		"7070",
+	})
 	if err := cmd.Execute(); err != nil {
 		t.Fatalf("serve: %v", err)
 	}
