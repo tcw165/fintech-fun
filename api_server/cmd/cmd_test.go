@@ -18,31 +18,31 @@ func TestListenAddrPortEnvWins(t *testing.T) {
 
 func TestRootListenAndServeAlias(t *testing.T) {
 	var got string
-	cmd := new_root(func(addr string) error {
+	root := cmd(func(addr string) error {
 		got = addr
 		return nil
 	})
-	cmd.SetArgs([]string{
+	root.SetArgs([]string{
 		"--port",
 		"9090",
 	})
-	if err := cmd.Execute(); err != nil {
+	if err := root.Execute(); err != nil {
 		t.Fatalf("root: %v", err)
 	}
 	if got != ":9090" {
 		t.Fatalf("root addr=%q", got)
 	}
 	got = ""
-	cmd = new_root(func(addr string) error {
+	serve := cmd(func(addr string) error {
 		got = addr
 		return nil
 	})
-	cmd.SetArgs([]string{
+	serve.SetArgs([]string{
 		"serve",
 		"--port",
 		"7070",
 	})
-	if err := cmd.Execute(); err != nil {
+	if err := serve.Execute(); err != nil {
 		t.Fatalf("serve: %v", err)
 	}
 	if got != ":7070" {
@@ -51,9 +51,9 @@ func TestRootListenAndServeAlias(t *testing.T) {
 }
 
 func TestUnknownCommand(t *testing.T) {
-	cmd := new_root(func(string) error { return nil })
-	cmd.SetArgs([]string{"nope"})
-	if err := cmd.Execute(); err == nil {
+	unknown := cmd(func(string) error { return nil })
+	unknown.SetArgs([]string{"nope"})
+	if err := unknown.Execute(); err == nil {
 		t.Fatal("expected unknown command")
 	}
 }
