@@ -34,6 +34,23 @@ func (c *AppContext) VectorsClient() qdrant.Client { return c.vector_db }
 - New Python uses Bazel. Do not add `__init__.py`.
 - Do not use a `test_tuit` target.
 
+## Multi-line args
+
+Call sites with three or more arguments, or one long string argument, put each argument on its own line. The same rule applies to Cobra `SetArgs`, flag helpers, and composite literals in tests so wrapped headlines and multi-word queries stay readable.
+
+```go
+got := execute_cli(
+	t,
+	"search",
+	"--query",
+	"LivePerson\nstock\nmerger",
+	"--limit",
+	"3",
+)
+```
+
+Headline and query strings may contain newlines. Collapse that whitespace the same way the tracker parser does (`\s+` → one space) before classify, search, or fold.
+
 ## PRs
 
 - Stack with Graphite (`gt`), not a single fat PR.
