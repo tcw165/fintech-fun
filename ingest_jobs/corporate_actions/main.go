@@ -27,7 +27,7 @@ func main() {
 	if err := cmd(func(req cli_params.CliParams) error {
 		app, err := di.Boot(
 			ctx,
-			di.ClientName("ingest", req.DryRun),
+			di.ClientName(req.DryRun),
 		)
 		if err != nil {
 			return err
