@@ -5,11 +5,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tcw165/fintech-fun/ingest_jobs/corporate_actions/request"
+	"github.com/tcw165/fintech-fun/ingest_jobs/corporate_actions/cli_params"
 )
 
 type exec_result struct {
-	req    request.Request
+	req    cli_params.Request
 	called bool
 	out    string
 	err    error
@@ -18,7 +18,7 @@ type exec_result struct {
 func execute_cli(t *testing.T, args ...string) exec_result {
 	t.Helper()
 	var got exec_result
-	cli := cmd(func(req request.Request) error {
+	cli := cmd(func(req cli_params.Request) error {
 		got.called = true
 		got.req = req
 		return nil
