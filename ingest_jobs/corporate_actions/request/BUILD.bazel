@@ -1,9 +1,0 @@
-# Command request contract. Pure data. No cobra, no graph.
-load("@rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "request",
-    srcs = ["request.go"],
-    importpath = "github.com/tcw165/fintech-fun/ingest_jobs/corporate_actions/request",
-    visibility = ["//ingest_jobs/corporate_actions:__subpackages__"],
-)
