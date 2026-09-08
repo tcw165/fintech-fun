@@ -12,6 +12,7 @@ go_library(
     deps = [
         "//api_server/di",
         "@com_github_spf13_cobra//:cobra",
+        "@org_uber_go_fx//:fx",
     ],
 )
 

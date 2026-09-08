@@ -20,7 +20,12 @@ type AppContext struct {
 	closer    func(context.Context) error
 }
 
-func New(graph_db neo4j.Client, vector_db qdrant.Client, embedder embed.Embedder, closer func(context.Context) error) *AppContext {
+func New(
+	graph_db neo4j.Client,
+	vector_db qdrant.Client,
+	embedder embed.Embedder,
+	closer func(context.Context) error,
+) *AppContext {
 	return &AppContext{
 		graph_db:  graph_db,
 		vector_db: vector_db,
@@ -83,5 +88,10 @@ func (c *AppContext) Handler() http.Handler {
 	if vector_client := c.VectorsClient(); vector_client != nil && c.Embedder() != nil {
 		searcher = impl.QdrantSearch{VectorsClient: vector_client, Embedder: c.Embedder()}
 	}
-	return impl.New(impl.StaticOK{}, folder, searcher, grapher)
+	return impl.New(
+		impl.StaticOK{},
+		folder,
+		searcher,
+		grapher,
+	)
 }
