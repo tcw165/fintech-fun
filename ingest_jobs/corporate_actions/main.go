@@ -59,21 +59,27 @@ func main() {
 func cmd(run run_func) *cobra.Command {
 	var dry_run bool
 	var file string
-	run_ingest := func(*cobra.Command, []string) error {
-		return run(request.Request{
-			Name:   "ingest",
-			File:   file,
-			DryRun: dry_run,
-		})
-	}
 	cmd := &cobra.Command{
-		Use:           "corporate_actions",
+		Use:           "corporate_actions [name]",
 		Short:         "Robinhood corporate-actions ingest",
-		Long:          "Fetch or read a tracker page, classify headlines, and ingest. --dry-run runs the same path without writing to Neo4j or Qdrant.",
+		Long:          "Fetch or read a tracker page, classify headlines, and ingest. --dry-run runs the same path without writing to Neo4j or Qdrant. Optional name: ingest (default), refresh, ping, seed, verify.",
 		SilenceUsage:  true,
 		SilenceErrors: true,
-		Args:          cobra.NoArgs,
-		RunE:          run_ingest,
+		Args:          cobra.MaximumNArgs(1),
+		RunE: func(_ *cobra.Command, args []string) error {
+			name := "ingest"
+			if len(args) == 1 {
+				name = args[0]
+			}
+			if !known_name(name) {
+				return fmt.Errorf("unknown command %q", name)
+			}
+			return run(request.Request{
+				Name:   name,
+				File:   file,
+				DryRun: dry_run,
+			})
+		},
 	}
 	cmd.Flags().BoolVar(
 		&dry_run,
@@ -89,23 +95,15 @@ func cmd(run run_func) *cobra.Command {
 		"tracker page file (default: fetch live)",
 	)
 	cmd.CompletionOptions.DisableDefaultCmd = true
-	cmd.AddCommand(
-		new_named_cmd("refresh", "Live prefix-dedup ingest plus waiting-policy metadata", run),
-		new_named_cmd("ping", "Write NFLX fixture and read it back", run),
-		new_named_cmd("seed", "Seed Notion fixtures into Neo4j and Qdrant", run),
-		new_named_cmd("verify", "Verify memory gold and optional Bolt gold", run),
-	)
 	return cmd
 }
 
-func new_named_cmd(name, short string, run run_func) *cobra.Command {
-	return &cobra.Command{
-		Use:   name,
-		Short: short,
-		Args:  cobra.NoArgs,
-		RunE: func(*cobra.Command, []string) error {
-			return run(request.Request{Name: name})
-		},
+func known_name(name string) bool {
+	switch name {
+	case "ingest", "refresh", "ping", "seed", "verify":
+		return true
+	default:
+		return false
 	}
 }
 
