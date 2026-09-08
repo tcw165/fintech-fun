@@ -8,11 +8,11 @@ import (
 	"github.com/tcw165/fintech-fun/graph/embed/lexical"
 )
 
-func needs_live_clients(args []string) bool {
-	if len(args) == 0 {
+func needs_live_clients(name string) bool {
+	if name == "" {
 		return true
 	}
-	switch args[0] {
+	switch name {
 	case "ping", "seed", "fold", "ingest", "search", "refresh":
 		return true
 	default:
@@ -20,25 +20,25 @@ func needs_live_clients(args []string) bool {
 	}
 }
 
-func wants_optional_clients(args []string) bool {
-	return len(args) > 0 && args[0] == "verify"
+func wants_optional_clients(name string) bool {
+	return name == "verify"
 }
 
-func NewFromEnv(ctx context.Context, args []string) (*AppContext, error) {
+func NewFromEnv(ctx context.Context, name string) (*AppContext, error) {
 	app := New(nil, nil, lexical.New(), nil)
-	if !needs_live_clients(args) && !wants_optional_clients(args) {
+	if !needs_live_clients(name) && !wants_optional_clients(name) {
 		return app, nil
 	}
 	driver, err := neo4jimpl.OpenFromEnv()
 	if err != nil {
-		if needs_live_clients(args) {
+		if needs_live_clients(name) {
 			return nil, err
 		}
 		return app, nil
 	}
 	app.closer = driver.Close
 	if err := driver.Verify(ctx); err != nil {
-		if needs_live_clients(args) {
+		if needs_live_clients(name) {
 			_ = app.Close(ctx)
 			return nil, err
 		}
