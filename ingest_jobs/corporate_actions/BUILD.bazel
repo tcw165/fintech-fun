@@ -13,7 +13,7 @@ go_library(
     importpath = "github.com/tcw165/fintech-fun/ingest_jobs/corporate_actions",
     visibility = ["//visibility:private"],
     deps = [
-        "//ingest_jobs/corporate_actions/request",
+        "//ingest_jobs/corporate_actions/cli_params",
         "//ingest_jobs/corporate_actions/tools",
         "//ingest_jobs/di",
         "@com_github_spf13_cobra//:cobra",
@@ -24,5 +24,5 @@ go_test(
     name = "corporate_actions_test",
     srcs = ["main_test.go"],
     embed = [":corporate_actions_lib"],
-    deps = ["//ingest_jobs/corporate_actions/request"],
+    deps = ["//ingest_jobs/corporate_actions/cli_params"],
 )

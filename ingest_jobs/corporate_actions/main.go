@@ -10,7 +10,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/tcw165/fintech-fun/ingest_jobs/corporate_actions/request"
+	"github.com/tcw165/fintech-fun/ingest_jobs/corporate_actions/cli_params"
 	"github.com/tcw165/fintech-fun/ingest_jobs/corporate_actions/tools"
 	"github.com/tcw165/fintech-fun/ingest_jobs/di"
 )
@@ -20,11 +20,11 @@ type exit_error struct {
 	code int
 }
 
-type run_func func(req request.Request) error
+type run_func func(req cli_params.Request) error
 
 func main() {
 	ctx := context.Background()
-	if err := cmd(func(req request.Request) error {
+	if err := cmd(func(req cli_params.Request) error {
 		app, err := di.Boot(
 			ctx,
 			di.ClientName(req.Name, req.DryRun),
@@ -74,7 +74,7 @@ func cmd(run run_func) *cobra.Command {
 			if !known_name(name) {
 				return fmt.Errorf("unknown command %q", name)
 			}
-			return run(request.Request{
+			return run(cli_params.Request{
 				Name:   name,
 				File:   file,
 				DryRun: dry_run,
