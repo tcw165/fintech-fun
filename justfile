@@ -194,7 +194,7 @@ ping:
 seed:
     just live seed
 
-# Ingest a tracker file or fetch live. Example: just ingest path/to/tracker.txt
+# Ingest a tracker file or fetch live. Example: just ingest --file path/to/tracker.txt
 ingest *args:
     just live ingest {{args}}
 
