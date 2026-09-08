@@ -22,7 +22,32 @@ type exit_error struct {
 func main() {
 	ctx := context.Background()
 	root := cli.New(func(req request.Request) error {
-		return run(ctx, req)
+		app, err := di.Boot(
+			ctx,
+			di.ClientName(req.Name, req.DryRun),
+		)
+		if err != nil {
+			return err
+		}
+		defer app.Close(ctx)
+		payload, err := tools.Run(
+			tools.Deps{
+				GraphClient:   app.GraphClient(),
+				VectorsClient: app.VectorsClient(),
+				Embedder:      app.Embedder(),
+				Agent:         app.Agent(),
+			},
+			req,
+		)
+		if err != nil {
+			return err
+		}
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", "  ")
+		if err := enc.Encode(payload); err != nil {
+			return &exit_error{error: err, code: 1}
+		}
+		return nil
 	})
 	if err := root.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -32,33 +57,4 @@ func main() {
 		}
 		os.Exit(2)
 	}
-}
-
-func run(ctx context.Context, req request.Request) error {
-	app, err := di.Boot(
-		ctx,
-		di.ClientName(req.Name, req.DryRun),
-	)
-	if err != nil {
-		return err
-	}
-	defer app.Close(ctx)
-	payload, err := tools.Run(
-		tools.Deps{
-			GraphClient:   app.GraphClient(),
-			VectorsClient: app.VectorsClient(),
-			Embedder:      app.Embedder(),
-			Agent:         app.Agent(),
-		},
-		req,
-	)
-	if err != nil {
-		return err
-	}
-	enc := json.NewEncoder(os.Stdout)
-	enc.SetIndent("", "  ")
-	if err := enc.Encode(payload); err != nil {
-		return &exit_error{error: err, code: 1}
-	}
-	return nil
 }
