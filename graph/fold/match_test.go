@@ -20,7 +20,16 @@ func TestMatchRowsSquare(t *testing.T) {
 		"cash_received": 0.0,
 		"series":        []any{map[string]any{"kind": "ticker_changed"}},
 	}}
-	check := MatchRows(rows, Expectation{Q: "square", Company: "Block", Ticker: "XYZ", QtyNow: 10, Series: 1})
+	check := MatchRows(
+		rows,
+		Expectation{
+			Q:       "square",
+			Company: "Block",
+			Ticker:  "XYZ",
+			QtyNow:  10,
+			Series:  1,
+		},
+	)
 	if !check.OK {
 		t.Fatalf("%+v", check)
 	}
@@ -33,7 +42,17 @@ func TestMatchRowsApgeCashAndEmptyIsUnresolved(t *testing.T) {
 		"qty_now":       0,
 		"cash_received": 1351.10,
 	}}
-	check := MatchRows(rows, Expectation{Q: "apge", Company: "Apogee", Ticker: "APGE", QtyNow: 0, Cash: 1351.10, Series: 1})
+	check := MatchRows(
+		rows,
+		Expectation{
+			Q:       "apge",
+			Company: "Apogee",
+			Ticker:  "APGE",
+			QtyNow:  0,
+			Cash:    1351.10,
+			Series:  1,
+		},
+	)
 	if !check.OK {
 		t.Fatalf("%+v", check)
 	}
