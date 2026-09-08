@@ -36,7 +36,7 @@ func TestFetchTrackerRetriesThenFails(t *testing.T) {
 	if _, err := FetchTracker(server.Client(), server.URL); err == nil {
 		t.Fatal("expected error")
 	}
-	if hits != maxAttempts {
+	if hits != max_attempts {
 		t.Fatalf("hits %d", hits)
 	}
 }

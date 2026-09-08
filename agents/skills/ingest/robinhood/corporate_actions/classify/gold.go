@@ -86,9 +86,9 @@ func SortedKindNames(kinds map[string]int) []string {
 	return names
 }
 
-func MustHitLive(row hood_events.TrackerRow, wantKind string) bool {
+func MustHitLive(row hood_events.TrackerRow, want_kind string) bool {
 	for _, event := range ClassifyRow(row) {
-		if !event.Skip && event.Kind == wantKind {
+		if !event.Skip && event.Kind == want_kind {
 			return true
 		}
 	}

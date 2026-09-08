@@ -20,14 +20,14 @@ func PageSHA256(text string) string {
 	return hex.EncodeToString(sum[:])
 }
 
-func youNowHoldKinds() map[graph.EventKind]bool {
+func you_now_hold_kinds() map[graph.EventKind]bool {
 	return map[graph.EventKind]bool{
 		graph.KindNowDifferentStock: true,
 		graph.KindExtraStock:        true,
 	}
 }
 
-func stockStatus(classified hood_events.ClassifiedEvent) graph.StockStatus {
+func stock_status(classified hood_events.ClassifiedEvent) graph.StockStatus {
 	headline := strings.ToLower(classified.Headline)
 	if classified.Kind == "worthless" {
 		return graph.StatusWorthless
@@ -46,11 +46,11 @@ func ToGraph(classified hood_events.ClassifiedEvent) (graph.Company, graph.Stock
 		return graph.Company{}, graph.Stock{}, graph.Event{}, false
 	}
 	kind := graph.EventKind(classified.Kind)
-	currentTicker := classified.Ticker
+	current_ticker := classified.Ticker
 	var former []string
 	if kind == graph.KindTickerChanged && classified.YouNowHold != "" {
 		former = []string{classified.Ticker}
-		currentTicker = classified.YouNowHold
+		current_ticker = classified.YouNowHold
 	}
 	name := classified.Company
 	if classified.NewName != "" {
@@ -63,22 +63,22 @@ func ToGraph(classified hood_events.ClassifiedEvent) (graph.Company, graph.Stock
 	if classified.NewName != "" && classified.Company != "" && classified.Company != classified.NewName {
 		aliases = []string{classified.Company}
 	}
-	youNowHold := ""
-	if youNowHoldKinds()[kind] {
-		youNowHold = classified.YouNowHold
+	you_now_hold := ""
+	if you_now_hold_kinds()[kind] {
+		you_now_hold = classified.YouNowHold
 	}
 	return graph.Company{Name: name, AlsoKnownAs: aliases},
-		graph.Stock{Ticker: currentTicker, FormerTickers: former, Status: stockStatus(classified)},
+		graph.Stock{Ticker: current_ticker, FormerTickers: former, Status: stock_status(classified)},
 		graph.Event{
 			Date:            classified.Date,
 			Kind:            kind,
 			Headline:        classified.Headline,
-			HappenedTo:      currentTicker,
+			HappenedTo:      current_ticker,
 			ShareMultiplier: classified.ShareMultiplier,
 			CashPerShare:    classified.CashPerShare,
 			KeepFractionals: classified.KeepFractionals,
 			CanTrade:        classified.CanTrade,
-			YouNowHold:      youNowHold,
+			YouNowHold:      you_now_hold,
 		}, true
 }
 
@@ -93,15 +93,15 @@ type IngestStats struct {
 	Stocks     []string `json:"stocks"`
 }
 
-func IngestClassified(graphClient graphneo4j.Client, events []hood_events.ClassifiedEvent, vectors graphqdrant.Client, embedder embed.Embedder) (IngestStats, error) {
+func IngestClassified(graph_client graphneo4j.Client, events []hood_events.ClassifiedEvent, vectors graphqdrant.Client, embedder embed.Embedder) (IngestStats, error) {
 	stats := IngestStats{}
-	existing, err := graphneo4j.ListEventIDs(graphClient)
+	existing, err := graphneo4j.ListEventIDs(graph_client)
 	if err != nil {
 		return stats, err
 	}
-	seenCompany := map[string]bool{}
-	seenStock := map[string]bool{}
-	var graphEvents []graph.Event
+	seen_company := map[string]bool{}
+	seen_stock := map[string]bool{}
+	var graph_events []graph.Event
 	for _, classified := range events {
 		company, stock, event, ok := ToGraph(classified)
 		if !ok {
@@ -112,30 +112,30 @@ func IngestClassified(graphClient graphneo4j.Client, events []hood_events.Classi
 			stats.Duplicates++
 			continue
 		}
-		if _, err := graphneo4j.IngestGraph(graphClient, company, stock, []graph.Event{event}); err != nil {
+		if _, err := graphneo4j.IngestGraph(graph_client, company, stock, []graph.Event{event}); err != nil {
 			return stats, err
 		}
 		existing[event.ID()] = true
-		graphEvents = append(graphEvents, event)
+		graph_events = append(graph_events, event)
 		stats.Created++
 		stats.Written++
-		if !seenCompany[company.Name] {
-			seenCompany[company.Name] = true
+		if !seen_company[company.Name] {
+			seen_company[company.Name] = true
 			stats.Companies = append(stats.Companies, company.Name)
 		}
-		if !seenStock[stock.Ticker] {
-			seenStock[stock.Ticker] = true
+		if !seen_stock[stock.Ticker] {
+			seen_stock[stock.Ticker] = true
 			stats.Stocks = append(stats.Stocks, stock.Ticker)
 		}
 	}
-	if vectors != nil && len(graphEvents) > 0 {
+	if vectors != nil && len(graph_events) > 0 {
 		if _, err := graphqdrant.EnsureCollection(vectors); err != nil {
 			return stats, err
 		}
 		var vecs [][]float64
 		if embedder != nil {
-			texts := make([]string, len(graphEvents))
-			for i, event := range graphEvents {
+			texts := make([]string, len(graph_events))
+			for i, event := range graph_events {
 				texts[i] = event.Headline
 			}
 			embedded, err := embedder.Embed(texts)
@@ -144,7 +144,7 @@ func IngestClassified(graphClient graphneo4j.Client, events []hood_events.Classi
 			}
 			vecs = embedded
 		}
-		if _, err := graphqdrant.UpsertEvents(vectors, graphEvents, vecs); err != nil {
+		if _, err := graphqdrant.UpsertEvents(vectors, graph_events, vecs); err != nil {
 			return stats, err
 		}
 	}
@@ -190,21 +190,21 @@ func PlanIngest(text string) PlanResult {
 	return PlanResult{Status: "success", DryRun: true, Written: len(planned), Skipped: skipped, Events: planned}
 }
 
-func IngestText(graphClient graphneo4j.Client, text string, vectors graphqdrant.Client, embedder embed.Embedder) (IngestStats, error) {
+func IngestText(graph_client graphneo4j.Client, text string, vectors graphqdrant.Client, embedder embed.Embedder) (IngestStats, error) {
 	hash := PageSHA256(text)
-	watermark, err := graphneo4j.ReadSource(graphClient, graph.IngestSourceCorporateActions)
+	watermark, err := graphneo4j.ReadSource(graph_client, graph.IngestSourceCorporateActions)
 	if err != nil {
 		return IngestStats{PageSHA256: hash}, err
 	}
 	if watermark.PageSHA256 != "" && watermark.PageSHA256 == hash {
 		return IngestStats{Unchanged: true, PageSHA256: hash}, nil
 	}
-	stats, err := IngestClassified(graphClient, classify.ClassifyRows(parser.ParseTracker(text)), vectors, embedder)
+	stats, err := IngestClassified(graph_client, classify.ClassifyRows(parser.ParseTracker(text)), vectors, embedder)
 	stats.PageSHA256 = hash
 	if err != nil {
 		return stats, err
 	}
-	if err := graphneo4j.UpsertSource(graphClient, graph.IngestSourceCorporateActions, hash); err != nil {
+	if err := graphneo4j.UpsertSource(graph_client, graph.IngestSourceCorporateActions, hash); err != nil {
 		return stats, err
 	}
 	return stats, nil

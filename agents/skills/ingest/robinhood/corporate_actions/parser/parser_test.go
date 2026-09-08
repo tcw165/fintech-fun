@@ -62,26 +62,26 @@ func TestParseFixtureDedupesDays(t *testing.T) {
 
 func TestParseFixtureKeepsLPSNAndAPGE(t *testing.T) {
 	rows := ParseTracker(testdata.TrackerSept2026)
-	var lpsnTicker, apgeHeadline string
-	var lpsnDate, apgeDate bool
+	var lpsn_ticker, apge_headline string
+	var lpsn_date, apge_date bool
 	for _, row := range rows {
 		if row.Ticker == "LPSN" {
-			lpsnTicker = row.Ticker
-			lpsnDate = row.Date.Equal(graph.Date(2026, 9, 4))
+			lpsn_ticker = row.Ticker
+			lpsn_date = row.Date.Equal(graph.Date(2026, 9, 4))
 			if !strings.Contains(row.Headline, "0.4673") || !strings.Contains(row.Headline, "SOUN") {
 				t.Fatalf("%+v", row)
 			}
 		}
 		if row.Ticker == "APGE" {
-			apgeHeadline = row.Headline
-			apgeDate = row.Date.Equal(graph.Date(2026, 9, 3))
+			apge_headline = row.Headline
+			apge_date = row.Date.Equal(graph.Date(2026, 9, 3))
 		}
 	}
-	if lpsnTicker == "" || !lpsnDate {
+	if lpsn_ticker == "" || !lpsn_date {
 		t.Fatal("missing LPSN")
 	}
-	if !apgeDate || !strings.Contains(apgeHeadline, "$135.11") {
-		t.Fatalf("%q", apgeHeadline)
+	if !apge_date || !strings.Contains(apge_headline, "$135.11") {
+		t.Fatalf("%q", apge_headline)
 	}
 }
 
