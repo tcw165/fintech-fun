@@ -27,7 +27,7 @@ func main() {
 	if err := cmd(func(req cli_params.CliParams) error {
 		app, err := di.Boot(
 			ctx,
-			di.ClientName(req.Name, req.DryRun),
+			di.ClientName("ingest", req.DryRun),
 		)
 		if err != nil {
 			return err
@@ -60,22 +60,14 @@ func cmd(run run_func) *cobra.Command {
 	var dry_run bool
 	var file string
 	cmd := &cobra.Command{
-		Use:           "corporate_actions [name]",
+		Use:           "corporate_actions",
 		Short:         "Robinhood corporate-actions ingest",
-		Long:          "Fetch or read a tracker page, classify headlines, and ingest. --dry-run runs the same path without writing to Neo4j or Qdrant. Optional name: ingest (default), refresh, ping, seed, verify.",
+		Long:          "Fetch or read a tracker page, classify headlines, and ingest. --dry-run runs the same path without writing to Neo4j or Qdrant.",
 		SilenceUsage:  true,
 		SilenceErrors: true,
-		Args:          cobra.MaximumNArgs(1),
-		RunE: func(_ *cobra.Command, args []string) error {
-			name := "ingest"
-			if len(args) == 1 {
-				name = args[0]
-			}
-			if !known_name(name) {
-				return fmt.Errorf("unknown command %q", name)
-			}
+		Args:          cobra.NoArgs,
+		RunE: func(*cobra.Command, []string) error {
 			return run(cli_params.CliParams{
-				Name:   name,
 				File:   file,
 				DryRun: dry_run,
 			})
@@ -96,15 +88,6 @@ func cmd(run run_func) *cobra.Command {
 	)
 	cmd.CompletionOptions.DisableDefaultCmd = true
 	return cmd
-}
-
-func known_name(name string) bool {
-	switch name {
-	case "ingest", "refresh", "ping", "seed", "verify":
-		return true
-	default:
-		return false
-	}
 }
 
 func write_result(stdout io.Writer, dry_run bool, payload any) error {

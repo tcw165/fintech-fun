@@ -37,8 +37,8 @@ func TestDefaultIngest(t *testing.T) {
 	if got.err != nil {
 		t.Fatalf("empty: %v", got.err)
 	}
-	if !got.called || got.req.Name != "ingest" {
-		t.Fatalf("got %+v, want ingest", got.req)
+	if !got.called || got.req.File != "" || got.req.DryRun {
+		t.Fatalf("got %+v", got.req)
 	}
 }
 
@@ -52,7 +52,7 @@ func TestFileAndDryRunFlags(t *testing.T) {
 	if got.err != nil {
 		t.Fatalf("flags: %v", got.err)
 	}
-	if got.req.Name != "ingest" || got.req.File != "tracker.txt" || !got.req.DryRun {
+	if got.req.File != "tracker.txt" || !got.req.DryRun {
 		t.Fatalf("got %+v", got.req)
 	}
 }
@@ -79,20 +79,10 @@ func TestLeftoverPositionalRejected(t *testing.T) {
 	}
 }
 
-func TestRefresh(t *testing.T) {
-	got := execute_cli(t, "refresh")
-	if got.err != nil {
-		t.Fatalf("refresh: %v", got.err)
-	}
-	if got.req.Name != "refresh" {
-		t.Fatalf("got %+v", got.req)
-	}
-}
-
 func TestUnknownCommand(t *testing.T) {
 	got := execute_cli(t, "parse")
 	if got.err == nil || got.called {
-		t.Fatal("expected unknown command")
+		t.Fatal("expected leftover positional to fail")
 	}
 }
 
@@ -129,15 +119,7 @@ func TestHelpRoot(t *testing.T) {
 	if !strings.Contains(got.out, "--dry-run") || !strings.Contains(got.out, "--file") {
 		t.Fatalf("help:\n%s", got.out)
 	}
-	for _, name := range []string{
-		"refresh",
-		"ping",
-		"seed",
-		"verify",
-		"parse",
-	} {
-		if strings.Contains(got.out, "  "+name+" ") {
-			t.Fatalf("subcommand %s still listed:\n%s", name, got.out)
-		}
+	if strings.Contains(got.out, "[name]") {
+		t.Fatalf("named tool still in usage:\n%s", got.out)
 	}
 }
