@@ -7,14 +7,14 @@ import (
 
 // Neo4jFold runs Notion FoldCypher through the injected client.
 type Neo4jFold struct {
-	Graph neo4j.Client
+	GraphClient neo4j.Client
 }
 
 func (n Neo4jFold) Fold(q string, qty float64) (contract.FoldResponse, error) {
-	if n.Graph == nil {
+	if n.GraphClient == nil {
 		return contract.FoldResponse{}, errNoGraph
 	}
-	rows, err := neo4j.Fold(n.Graph, q, qty)
+	rows, err := neo4j.Fold(n.GraphClient, q, qty)
 	if err != nil {
 		return contract.FoldResponse{}, err
 	}

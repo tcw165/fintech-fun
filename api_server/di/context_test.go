@@ -51,6 +51,9 @@ func TestNewHandlerHealthz(t *testing.T) {
 	if app.graph_db != graph_db || app.vector_db != vector_db || app.embedder == nil {
 		t.Fatalf("clients not stored: %+v", app)
 	}
+	if app.GraphClient() != graph_db || app.VectorsClient() != vector_db || app.Embedder() == nil {
+		t.Fatalf("accessors: %+v", app)
+	}
 	srv := httptest.NewServer(app.Handler())
 	t.Cleanup(srv.Close)
 	resp, err := http.Get(srv.URL + "/healthz")
@@ -120,4 +123,11 @@ func TestSetAddr(t *testing.T) {
 	}
 	var nil_app *AppContext
 	nil_app.SetAddr(":1")
+}
+
+func TestNilContextAccessors(t *testing.T) {
+	var app *AppContext
+	if app.GraphClient() != nil || app.VectorsClient() != nil || app.Embedder() != nil {
+		t.Fatalf("nil accessors: %+v", app)
+	}
 }

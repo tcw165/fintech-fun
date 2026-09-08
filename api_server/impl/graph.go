@@ -8,14 +8,14 @@ import (
 
 // Neo4jGraph surfaces Company/Stock/Event series and the ingest watermark.
 type Neo4jGraph struct {
-	Graph neo4j.Client
+	GraphClient neo4j.Client
 }
 
 func (n Neo4jGraph) Series(q string) (contract.GraphResponse, error) {
-	if n.Graph == nil {
+	if n.GraphClient == nil {
 		return contract.GraphResponse{}, errNoGraph
 	}
-	rows, err := neo4j.Series(n.Graph, q)
+	rows, err := neo4j.Series(n.GraphClient, q)
 	if err != nil {
 		return contract.GraphResponse{}, err
 	}
@@ -23,10 +23,10 @@ func (n Neo4jGraph) Series(q string) (contract.GraphResponse, error) {
 }
 
 func (n Neo4jGraph) Source() (contract.SourceResponse, error) {
-	if n.Graph == nil {
+	if n.GraphClient == nil {
 		return contract.SourceResponse{}, errNoGraph
 	}
-	watermark, err := neo4j.ReadSource(n.Graph, graph.IngestSourceCorporateActions)
+	watermark, err := neo4j.ReadSource(n.GraphClient, graph.IngestSourceCorporateActions)
 	if err != nil {
 		return contract.SourceResponse{}, err
 	}

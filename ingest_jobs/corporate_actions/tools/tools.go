@@ -22,10 +22,10 @@ import (
 )
 
 type Deps struct {
-	Graph   neo4j.Client
-	Vectors qdrant.Client
-	Embed   embed.Embedder
-	Agent   *agent.Agent
+	GraphClient   neo4j.Client
+	VectorsClient qdrant.Client
+	Embedder      embed.Embedder
+	Agent         *agent.Agent
 }
 
 func Run(deps Deps, args []string) (any, error) {
@@ -96,14 +96,14 @@ func run_refresh(deps Deps) (any, error) {
 }
 
 func run_search(deps Deps, args []string) (any, error) {
-	if deps.Vectors == nil {
+	if deps.VectorsClient == nil {
 		return nil, fmt.Errorf("search requires an injected Qdrant client")
 	}
 	if len(args) < 2 {
 		return nil, fmt.Errorf("search requires a query")
 	}
 	query := strings.Join(args[1:], " ")
-	embedder := deps.Embed
+	embedder := deps.Embedder
 	if embedder == nil {
 		embedder = lexical.New()
 	}
@@ -111,7 +111,7 @@ func run_search(deps Deps, args []string) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	hits, err := qdrant.SearchHeadlines(deps.Vectors, vecs[0], 5)
+	hits, err := qdrant.SearchHeadlines(deps.VectorsClient, vecs[0], 5)
 	if err != nil {
 		return nil, err
 	}
@@ -128,10 +128,10 @@ func run_verify(deps Deps) (any, error) {
 	}
 	out := map[string]any{"status": "ok", "passed": ok, "checks": memory}
 	bolt_failed := 0
-	if deps.Graph != nil {
+	if deps.GraphClient != nil {
 		var bolt []map[string]any
 		for _, want := range fold.GoldFold() {
-			rows, err := neo4j.Fold(deps.Graph, want.Q, want.Qty)
+			rows, err := neo4j.Fold(deps.GraphClient, want.Q, want.Qty)
 			item := map[string]any{"q": want.Q, "qty": want.Qty}
 			if err != nil {
 				item["error"] = err.Error()
@@ -167,20 +167,20 @@ func run_ping(deps Deps) (any, error) {
 	if err := require_clients(deps, "ping"); err != nil {
 		return nil, err
 	}
-	if err := neo4j.ApplyConstraints(deps.Graph); err != nil {
+	if err := neo4j.ApplyConstraints(deps.GraphClient); err != nil {
 		return nil, err
 	}
-	if _, err := qdrant.EnsureCollection(deps.Vectors); err != nil {
+	if _, err := qdrant.EnsureCollection(deps.VectorsClient); err != nil {
 		return nil, err
 	}
 	company, stock, events := examples.NFLX()
-	if _, err := neo4j.IngestGraph(deps.Graph, company, stock, events); err != nil {
+	if _, err := neo4j.IngestGraph(deps.GraphClient, company, stock, events); err != nil {
 		return nil, err
 	}
-	if _, err := qdrant.UpsertEvents(deps.Vectors, events, nil); err != nil {
+	if _, err := qdrant.UpsertEvents(deps.VectorsClient, events, nil); err != nil {
 		return nil, err
 	}
-	rows, err := deps.Graph.Run(
+	rows, err := deps.GraphClient.Run(
 		"MATCH (e:Event {id: $id}) RETURN e.headline AS headline, e.kind AS kind",
 		map[string]any{"id": events[0].ID()},
 	)
@@ -200,10 +200,10 @@ func run_seed(deps Deps) (any, error) {
 	if err := require_clients(deps, "seed"); err != nil {
 		return nil, err
 	}
-	if err := neo4j.ApplyConstraints(deps.Graph); err != nil {
+	if err := neo4j.ApplyConstraints(deps.GraphClient); err != nil {
 		return nil, err
 	}
-	if _, err := qdrant.EnsureCollection(deps.Vectors); err != nil {
+	if _, err := qdrant.EnsureCollection(deps.VectorsClient); err != nil {
 		return nil, err
 	}
 	type row struct {
@@ -215,11 +215,11 @@ func run_seed(deps Deps) (any, error) {
 	seeded := 0
 	event_count := 0
 	for _, fixture := range examples.All() {
-		result, err := neo4j.IngestGraph(deps.Graph, fixture.Company, fixture.Stock, fixture.Events)
+		result, err := neo4j.IngestGraph(deps.GraphClient, fixture.Company, fixture.Stock, fixture.Events)
 		if err != nil {
 			return nil, err
 		}
-		if _, err := qdrant.UpsertEvents(deps.Vectors, fixture.Events, nil); err != nil {
+		if _, err := qdrant.UpsertEvents(deps.VectorsClient, fixture.Events, nil); err != nil {
 			return nil, err
 		}
 		seeded++
@@ -245,7 +245,7 @@ func run_fold(deps Deps, args []string) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	rows, err := neo4j.Fold(deps.Graph, args[1], qty)
+	rows, err := neo4j.Fold(deps.GraphClient, args[1], qty)
 	if err != nil {
 		return nil, err
 	}
@@ -323,7 +323,7 @@ func run_plan(args []string) (any, error) {
 }
 
 func require_clients(deps Deps, cmd string) error {
-	if deps.Graph == nil || deps.Vectors == nil || deps.Agent == nil {
+	if deps.GraphClient == nil || deps.VectorsClient == nil || deps.Agent == nil {
 		return fmt.Errorf("%s requires injected Neo4j, Qdrant, and ingest agent", cmd)
 	}
 	return nil

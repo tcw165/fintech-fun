@@ -33,14 +33,14 @@ func (c *AppContext) Close(ctx context.Context) error {
 	return c.closer(ctx)
 }
 
-func (c *AppContext) Graph() neo4j.Client {
+func (c *AppContext) GraphClient() neo4j.Client {
 	if c == nil {
 		return nil
 	}
 	return c.graph_db
 }
 
-func (c *AppContext) Vectors() qdrant.Client {
+func (c *AppContext) VectorsClient() qdrant.Client {
 	if c == nil {
 		return nil
 	}

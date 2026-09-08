@@ -99,7 +99,7 @@ func TestFoldBadRequest(t *testing.T) {
 
 func TestNeo4jFoldIssuesCypher(t *testing.T) {
 	rec := &neo4jimpl.Recording{}
-	out, err := impl.Neo4jFold{Graph: rec}.Fold("square", 10)
+	out, err := impl.Neo4jFold{GraphClient: rec}.Fold("square", 10)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -234,14 +234,14 @@ func TestV1FoldAndSearchAliases(t *testing.T) {
 
 func TestNeo4jGraphIssuesCypher(t *testing.T) {
 	rec := &neo4jimpl.Recording{}
-	out, err := impl.Neo4jGraph{Graph: rec}.Series("square")
+	out, err := impl.Neo4jGraph{GraphClient: rec}.Series("square")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if out.Q != "square" || len(rec.Calls) != 1 || rec.Calls[0].Params["q"] != "square" {
 		t.Fatalf("%+v %+v", out, rec.Calls)
 	}
-	src, err := impl.Neo4jGraph{Graph: rec}.Source()
+	src, err := impl.Neo4jGraph{GraphClient: rec}.Source()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -252,7 +252,7 @@ func TestNeo4jGraphIssuesCypher(t *testing.T) {
 
 func TestQdrantSearchUsesRecording(t *testing.T) {
 	vectors := &qdrantimpl.Recording{}
-	out, err := impl.QdrantSearch{Vectors: vectors, Embed: lexical.New()}.Search("LivePerson stock merger")
+	out, err := impl.QdrantSearch{VectorsClient: vectors, Embedder: lexical.New()}.Search("LivePerson stock merger")
 	if err != nil {
 		t.Fatal(err)
 	}

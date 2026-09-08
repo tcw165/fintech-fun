@@ -47,7 +47,7 @@ func TestNewMapsClients(t *testing.T) {
 	if app.graph_db != graph_db || app.vector_db != vector_db || app.embedder == nil {
 		t.Fatalf("clients not stored: %+v", app)
 	}
-	if app.Graph() != graph_db || app.Vectors() != vector_db || app.Embedder() == nil {
+	if app.GraphClient() != graph_db || app.VectorsClient() != vector_db || app.Embedder() == nil {
 		t.Fatalf("accessors: %+v", app)
 	}
 	if app.Agent() == nil {
@@ -57,7 +57,7 @@ func TestNewMapsClients(t *testing.T) {
 
 func TestNilContextAccessors(t *testing.T) {
 	var app *AppContext
-	if app.Graph() != nil || app.Vectors() != nil || app.Embedder() != nil {
+	if app.GraphClient() != nil || app.VectorsClient() != nil || app.Embedder() != nil {
 		t.Fatalf("nil accessors: %+v", app)
 	}
 	if app.Agent() == nil {
@@ -108,7 +108,7 @@ func TestNewFromEnvOfflineLeavesClientsNil(t *testing.T) {
 		if app.embedder == nil {
 			t.Fatalf("%v missing embedder", args)
 		}
-		if app.Graph() != nil || app.Vectors() != nil {
+		if app.GraphClient() != nil || app.VectorsClient() != nil {
 			t.Fatalf("%v clients set via accessors", args)
 		}
 	}

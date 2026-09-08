@@ -8,19 +8,19 @@ import (
 
 // QdrantSearch embeds the query and ranks headlines through the injected client.
 type QdrantSearch struct {
-	Vectors qdrant.Client
-	Embed   embed.Embedder
+	VectorsClient qdrant.Client
+	Embedder      embed.Embedder
 }
 
 func (s QdrantSearch) Search(query string) (contract.SearchResponse, error) {
-	if s.Vectors == nil || s.Embed == nil {
+	if s.VectorsClient == nil || s.Embedder == nil {
 		return contract.SearchResponse{}, errNoSearch
 	}
-	vecs, err := s.Embed.Embed([]string{query})
+	vecs, err := s.Embedder.Embed([]string{query})
 	if err != nil {
 		return contract.SearchResponse{}, err
 	}
-	hits, err := qdrant.SearchHeadlines(s.Vectors, vecs[0], 5)
+	hits, err := qdrant.SearchHeadlines(s.VectorsClient, vecs[0], 5)
 	if err != nil {
 		return contract.SearchResponse{}, err
 	}

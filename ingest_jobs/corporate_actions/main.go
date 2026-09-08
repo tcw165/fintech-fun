@@ -38,10 +38,10 @@ func run(ctx context.Context, args []string) error {
 	}
 	defer app.Close(ctx)
 	payload, err := tools.Run(tools.Deps{
-		Graph:   app.Graph(),
-		Vectors: app.Vectors(),
-		Embed:   app.Embedder(),
-		Agent:   app.Agent(),
+		GraphClient:   app.GraphClient(),
+		VectorsClient: app.VectorsClient(),
+		Embedder:      app.Embedder(),
+		Agent:         app.Agent(),
 	}, args)
 	if err != nil {
 		return err
