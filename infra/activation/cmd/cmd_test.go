@@ -34,9 +34,9 @@ func (s *stub_checker) Gold(api string) contract.Report {
 func execute_cmd(t *testing.T, checker contract.Checker, args ...string) (string, error) {
 	t.Helper()
 	stdout := &bytes.Buffer{}
-	cmd := new_root(checker, stdout)
-	cmd.SetArgs(args)
-	err := cmd.Execute()
+	cli := cmd(checker, stdout)
+	cli.SetArgs(args)
+	err := cli.Execute()
 	return stdout.String(), err
 }
 

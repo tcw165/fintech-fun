@@ -3,10 +3,7 @@ load("@rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
 
 go_library(
     name = "cmd_lib",
-    srcs = [
-        "main.go",
-        "root.go",
-    ],
+    srcs = ["main.go"],
     importpath = "github.com/tcw165/fintech-fun/infra/activation/cmd",
     visibility = ["//visibility:private"],
     deps = [
@@ -31,7 +28,7 @@ go_binary(
 
 go_test(
     name = "cmd_test",
-    srcs = ["root_test.go"],
+    srcs = ["cmd_test.go"],
     embed = [":cmd_lib"],
     deps = [
         "//infra/activation/contract",
