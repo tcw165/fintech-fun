@@ -12,7 +12,7 @@ type Neo4jFold struct {
 
 func (n Neo4jFold) Fold(q string, qty float64) (contract.FoldResponse, error) {
 	if n.GraphClient == nil {
-		return contract.FoldResponse{}, errNoGraph
+		return contract.FoldResponse{}, err_no_graph
 	}
 	rows, err := neo4j.Fold(n.GraphClient, q, qty)
 	if err != nil {
@@ -21,8 +21,8 @@ func (n Neo4jFold) Fold(q string, qty float64) (contract.FoldResponse, error) {
 	return contract.FoldResponse{Status: "ok", Q: q, Qty: qty, Rows: rows}, nil
 }
 
-type foldError string
+type fold_error string
 
-func (e foldError) Error() string { return string(e) }
+func (e fold_error) Error() string { return string(e) }
 
-const errNoGraph foldError = "fold requires an injected Neo4j client"
+const err_no_graph fold_error = "fold requires an injected Neo4j client"

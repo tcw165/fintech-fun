@@ -13,7 +13,7 @@ type Neo4jGraph struct {
 
 func (n Neo4jGraph) Series(q string) (contract.GraphResponse, error) {
 	if n.GraphClient == nil {
-		return contract.GraphResponse{}, errNoGraph
+		return contract.GraphResponse{}, err_no_graph
 	}
 	rows, err := neo4j.Series(n.GraphClient, q)
 	if err != nil {
@@ -24,7 +24,7 @@ func (n Neo4jGraph) Series(q string) (contract.GraphResponse, error) {
 
 func (n Neo4jGraph) Source() (contract.SourceResponse, error) {
 	if n.GraphClient == nil {
-		return contract.SourceResponse{}, errNoGraph
+		return contract.SourceResponse{}, err_no_graph
 	}
 	watermark, err := neo4j.ReadSource(n.GraphClient, graph.IngestSourceCorporateActions)
 	if err != nil {

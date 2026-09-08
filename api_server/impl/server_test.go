@@ -34,20 +34,20 @@ func TestHealthz(t *testing.T) {
 	}
 }
 
-type stubFold struct {
+type stub_fold struct {
 	q    string
 	qty  float64
 	resp contract.FoldResponse
 	err  error
 }
 
-func (s *stubFold) Fold(q string, qty float64) (contract.FoldResponse, error) {
+func (s *stub_fold) Fold(q string, qty float64) (contract.FoldResponse, error) {
 	s.q, s.qty = q, qty
 	return s.resp, s.err
 }
 
 func TestFoldQuery(t *testing.T) {
-	stub := &stubFold{resp: contract.FoldResponse{
+	stub := &stub_fold{resp: contract.FoldResponse{
 		Status: "ok", Q: "square", Qty: 10,
 		Rows: []map[string]any{{"company": "Block", "ticker_now": "XYZ"}},
 	}}
@@ -85,7 +85,7 @@ func TestFoldUnavailable(t *testing.T) {
 }
 
 func TestFoldBadRequest(t *testing.T) {
-	srv := httptest.NewServer(impl.New(impl.StaticOK{}, &stubFold{}, nil, nil))
+	srv := httptest.NewServer(impl.New(impl.StaticOK{}, &stub_fold{}, nil, nil))
 	t.Cleanup(srv.Close)
 	resp, err := http.Get(srv.URL + "/fold?q=&qty=x")
 	if err != nil {
@@ -108,18 +108,18 @@ func TestNeo4jFoldIssuesCypher(t *testing.T) {
 	}
 }
 
-type stubSearch struct {
+type stub_search struct {
 	q    string
 	resp contract.SearchResponse
 }
 
-func (s *stubSearch) Search(query string) (contract.SearchResponse, error) {
+func (s *stub_search) Search(query string) (contract.SearchResponse, error) {
 	s.q = query
 	return s.resp, nil
 }
 
 func TestSearchQuery(t *testing.T) {
-	stub := &stubSearch{resp: contract.SearchResponse{Status: "ok", Query: "LivePerson stock merger", Hits: []any{"LPSN"}}}
+	stub := &stub_search{resp: contract.SearchResponse{Status: "ok", Query: "LivePerson stock merger", Hits: []any{"LPSN"}}}
 	srv := httptest.NewServer(impl.New(impl.StaticOK{}, nil, stub, nil))
 	t.Cleanup(srv.Close)
 	resp, err := http.Get(srv.URL + "/search?q=LivePerson+stock+merger")
@@ -152,23 +152,23 @@ func TestSearchUnavailable(t *testing.T) {
 	}
 }
 
-type stubGraph struct {
+type stub_graph struct {
 	q    string
 	resp contract.GraphResponse
 	src  contract.SourceResponse
 }
 
-func (s *stubGraph) Series(q string) (contract.GraphResponse, error) {
+func (s *stub_graph) Series(q string) (contract.GraphResponse, error) {
 	s.q = q
 	return s.resp, nil
 }
 
-func (s *stubGraph) Source() (contract.SourceResponse, error) {
+func (s *stub_graph) Source() (contract.SourceResponse, error) {
 	return s.src, nil
 }
 
 func TestGraphSeries(t *testing.T) {
-	stub := &stubGraph{resp: contract.GraphResponse{
+	stub := &stub_graph{resp: contract.GraphResponse{
 		Status: "ok", Q: "square",
 		Rows: []map[string]any{{"company": "Block", "ticker_now": "XYZ"}},
 	}}
@@ -192,7 +192,7 @@ func TestGraphSeries(t *testing.T) {
 }
 
 func TestGraphSource(t *testing.T) {
-	stub := &stubGraph{src: contract.SourceResponse{Status: "ok", ID: "robinhood/corporate_actions", PageSHA256: "abc"}}
+	stub := &stub_graph{src: contract.SourceResponse{Status: "ok", ID: "robinhood/corporate_actions", PageSHA256: "abc"}}
 	srv := httptest.NewServer(impl.New(impl.StaticOK{}, nil, nil, stub))
 	t.Cleanup(srv.Close)
 	resp, err := http.Get(srv.URL + "/v1/graph/source")
@@ -210,8 +210,8 @@ func TestGraphSource(t *testing.T) {
 }
 
 func TestV1FoldAndSearchAliases(t *testing.T) {
-	fold := &stubFold{resp: contract.FoldResponse{Status: "ok", Q: "square", Qty: 10}}
-	search := &stubSearch{resp: contract.SearchResponse{Status: "ok", Query: "LPSN"}}
+	fold := &stub_fold{resp: contract.FoldResponse{Status: "ok", Q: "square", Qty: 10}}
+	search := &stub_search{resp: contract.SearchResponse{Status: "ok", Query: "LPSN"}}
 	srv := httptest.NewServer(impl.New(impl.StaticOK{}, fold, search, nil))
 	t.Cleanup(srv.Close)
 	resp, err := http.Get(srv.URL + "/v1/graph/fold?q=square&qty=10")
