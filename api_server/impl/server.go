@@ -16,7 +16,7 @@ func New(handler contract.Handler, folder contract.Folder, searcher contract.Sea
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(handler.Health())
 	})
-	writeFold := func(w http.ResponseWriter, r *http.Request) {
+	write_fold := func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		if folder == nil {
 			w.WriteHeader(http.StatusServiceUnavailable)
@@ -38,9 +38,9 @@ func New(handler contract.Handler, folder contract.Folder, searcher contract.Sea
 		}
 		_ = json.NewEncoder(w).Encode(out)
 	}
-	mux.HandleFunc("GET /fold", writeFold)
-	mux.HandleFunc("GET /v1/graph/fold", writeFold)
-	writeSearch := func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("GET /fold", write_fold)
+	mux.HandleFunc("GET /v1/graph/fold", write_fold)
+	write_search := func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		if searcher == nil {
 			w.WriteHeader(http.StatusServiceUnavailable)
@@ -61,8 +61,8 @@ func New(handler contract.Handler, folder contract.Folder, searcher contract.Sea
 		}
 		_ = json.NewEncoder(w).Encode(out)
 	}
-	mux.HandleFunc("GET /search", writeSearch)
-	mux.HandleFunc("GET /v1/graph/search", writeSearch)
+	mux.HandleFunc("GET /search", write_search)
+	mux.HandleFunc("GET /v1/graph/search", write_search)
 	mux.HandleFunc("GET /v1/graph", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		if grapher == nil {

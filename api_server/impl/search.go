@@ -14,7 +14,7 @@ type QdrantSearch struct {
 
 func (s QdrantSearch) Search(query string) (contract.SearchResponse, error) {
 	if s.VectorsClient == nil || s.Embedder == nil {
-		return contract.SearchResponse{}, errNoSearch
+		return contract.SearchResponse{}, err_no_search
 	}
 	vecs, err := s.Embedder.Embed([]string{query})
 	if err != nil {
@@ -27,4 +27,4 @@ func (s QdrantSearch) Search(query string) (contract.SearchResponse, error) {
 	return contract.SearchResponse{Status: "ok", Query: query, Hits: hits}, nil
 }
 
-const errNoSearch foldError = "search requires injected Qdrant and Embedder"
+const err_no_search fold_error = "search requires injected Qdrant and Embedder"
