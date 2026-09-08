@@ -1,5 +1,5 @@
-// Package cli is the Cobra tree for the corporate_actions job binary.
-package cli
+// Cobra tree for the corporate_actions job binary. Lives next to main, like api_server/cmd.
+package main
 
 import (
 	"fmt"
@@ -9,8 +9,7 @@ import (
 	"github.com/tcw165/fintech-fun/ingest_jobs/corporate_actions/request"
 )
 
-// Run dispatches one parsed Request.
-type Run func(req request.Request) error
+type run_func func(req request.Request) error
 
 type tool_spec struct {
 	name  string
@@ -19,7 +18,7 @@ type tool_spec struct {
 	flags func(*cobra.Command)
 }
 
-func New(run Run) *cobra.Command {
+func new_root(run run_func) *cobra.Command {
 	root := &cobra.Command{
 		Use:           "corporate_actions",
 		Short:         "Robinhood corporate-actions ingest agent",
@@ -36,13 +35,13 @@ func New(run Run) *cobra.Command {
 		},
 	}
 	root.CompletionOptions.DisableDefaultCmd = true
-	for _, spec := range tools() {
+	for _, spec := range tool_specs() {
 		root.AddCommand(new_tool_cmd(spec, run))
 	}
 	return root
 }
 
-func tools() []tool_spec {
+func tool_specs() []tool_spec {
 	return []tool_spec{
 		{
 			name:  "parse",
@@ -115,7 +114,7 @@ func tools() []tool_spec {
 	}
 }
 
-func new_tool_cmd(spec tool_spec, run Run) *cobra.Command {
+func new_tool_cmd(spec tool_spec, run run_func) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   spec.use,
 		Short: spec.short,
