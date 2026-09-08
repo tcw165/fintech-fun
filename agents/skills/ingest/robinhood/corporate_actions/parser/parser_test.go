@@ -104,3 +104,23 @@ func TestParseTrackerPage(t *testing.T) {
 		t.Fatalf("%+v", result)
 	}
 }
+
+func TestParseWrappedHeadlineStaysOneRow(t *testing.T) {
+	text := `
+## September 4, 2026
+
+LivePerson (LPSN) performed a stock merger.
+Shareholders will receive 0.4673 new shares of SOUN
+for each old share of LPSN previously held.
+`
+	rows := ParseTracker(text)
+	if len(rows) != 1 {
+		t.Fatalf("%+v", rows)
+	}
+	if rows[0].Ticker != "LPSN" || strings.Contains(rows[0].Headline, "\n") {
+		t.Fatalf("%+v", rows[0])
+	}
+	if !strings.Contains(rows[0].Headline, "0.4673") || !strings.Contains(rows[0].Headline, "SOUN") {
+		t.Fatalf("%q", rows[0].Headline)
+	}
+}
