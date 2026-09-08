@@ -12,12 +12,12 @@ import (
 )
 
 func TestHTTPPutCollectionAndUpsert(t *testing.T) {
-	var gotPath string
-	var gotBody map[string]any
+	var got_path string
+	var got_body map[string]any
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		gotPath = r.URL.Path
+		got_path = r.URL.Path
 		raw, _ := io.ReadAll(r.Body)
-		_ = json.Unmarshal(raw, &gotBody)
+		_ = json.Unmarshal(raw, &got_body)
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{"status":"ok","result":true}`))
 	}))
@@ -27,24 +27,24 @@ func TestHTTPPutCollectionAndUpsert(t *testing.T) {
 	if _, err := qdrant.EnsureCollection(client); err != nil {
 		t.Fatal(err)
 	}
-	if gotPath != "/collections/corporate_actions" {
-		t.Fatalf("path %s", gotPath)
+	if got_path != "/collections/corporate_actions" {
+		t.Fatalf("path %s", got_path)
 	}
-	vectors := gotBody["vectors"].(map[string]any)["headline"].(map[string]any)
+	vectors := got_body["vectors"].(map[string]any)["headline"].(map[string]any)
 	if vectors["size"] != float64(qdrant.VectorSize) || vectors["distance"] != "Cosine" {
-		t.Fatalf("%v", gotBody)
+		t.Fatalf("%v", got_body)
 	}
 
 	_, _, events := examples.NFLX()
 	if _, err := qdrant.UpsertEvents(client, events, nil); err != nil {
 		t.Fatal(err)
 	}
-	if gotPath != "/collections/corporate_actions/points" {
-		t.Fatalf("path %s", gotPath)
+	if got_path != "/collections/corporate_actions/points" {
+		t.Fatalf("path %s", got_path)
 	}
-	points := gotBody["points"].([]any)
+	points := got_body["points"].([]any)
 	if len(points) != 1 {
-		t.Fatalf("%v", gotBody)
+		t.Fatalf("%v", got_body)
 	}
 }
 
@@ -65,7 +65,7 @@ func TestURLFromEnv(t *testing.T) {
 		t.Fatal(URLFromEnv())
 	}
 	t.Setenv("QDRANT_URL", "http://qdrant:6333")
-	if NewHTTPFromEnv().BaseURL != "http://qdrant:6333" {
-		t.Fatal(NewHTTPFromEnv().BaseURL)
+	if NewHTTPFromEnv().BaseURL() != "http://qdrant:6333" {
+		t.Fatal(NewHTTPFromEnv().BaseURL())
 	}
 }

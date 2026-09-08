@@ -74,9 +74,9 @@ func TestFoldFTEL(t *testing.T) {
 			t.Fatalf("row %d got %s want %s", i, result.Series[i].Kind, kind)
 		}
 	}
-	wantQty := 10.0 / 16 / 8 / 7 / 9
-	if result.QtyNow < wantQty-1e-12 || result.QtyNow > wantQty+1e-12 {
-		t.Fatalf("qty %v want %v", result.QtyNow, wantQty)
+	want_qty := 10.0 / 16 / 8 / 7 / 9
+	if result.QtyNow < want_qty-1e-12 || result.QtyNow > want_qty+1e-12 {
+		t.Fatalf("qty %v want %v", result.QtyNow, want_qty)
 	}
 	if !result.Series[2].Date.Equal(graph.Date(2026, 3, 12)) {
 		t.Fatalf("date %v", result.Series[2].Date)
