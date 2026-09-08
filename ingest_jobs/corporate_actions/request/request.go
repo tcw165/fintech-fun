@@ -3,16 +3,7 @@ package request
 
 // Request is one parsed CLI invocation. Empty Name means default ingest.
 type Request struct {
-	Name     string
-	File     string
-	Out      string
-	Query    string
-	Limit    int
-	Q        string
-	Qty      float64
-	Date     string
-	Headline string
-	Company  string
-	Ticker   string
-	DryRun   bool
+	Name   string
+	File   string
+	DryRun bool
 }
