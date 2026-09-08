@@ -43,7 +43,12 @@ func TestDefaultIngest(t *testing.T) {
 }
 
 func TestParseForwardsFile(t *testing.T) {
-	got := execute_cli(t, "parse", "--file", "tracker.txt")
+	got := execute_cli(
+		t,
+		"parse",
+		"--file",
+		"tracker.txt",
+	)
 	if got.err != nil {
 		t.Fatalf("parse: %v", got.err)
 	}
@@ -63,7 +68,14 @@ func TestParseRequiresFile(t *testing.T) {
 }
 
 func TestSearchFlags(t *testing.T) {
-	got := execute_cli(t, "search", "--query", "LivePerson stock merger", "--limit", "3")
+	got := execute_cli(
+		t,
+		"search",
+		"--query",
+		"LivePerson stock merger",
+		"--limit",
+		"3",
+	)
 	if got.err != nil {
 		t.Fatalf("search: %v", got.err)
 	}
@@ -72,8 +84,56 @@ func TestSearchFlags(t *testing.T) {
 	}
 }
 
+func TestSearchCollapsesMultilineQuery(t *testing.T) {
+	got := execute_cli(
+		t,
+		"search",
+		"--query",
+		"LivePerson\nstock\nmerger",
+	)
+	if got.err != nil {
+		t.Fatalf("search: %v", got.err)
+	}
+	if got.req.Name != "search" || got.req.Query != "LivePerson stock merger" {
+		t.Fatalf("got %+v", got.req)
+	}
+}
+
+func TestClassifyForwardsMultilineHeadline(t *testing.T) {
+	got := execute_cli(
+		t,
+		"classify",
+		"--date",
+		"2026-09-04",
+		"--headline",
+		"LivePerson (LPSN) performed a stock merger.\nShareholders will receive 0.4673 new shares of SOUN.",
+		"--company",
+		"LivePerson",
+		"--ticker",
+		"LPSN",
+	)
+	if got.err != nil {
+		t.Fatalf("classify: %v", got.err)
+	}
+	if got.req.Name != "classify" || got.req.Date != "2026-09-04" {
+		t.Fatalf("got %+v", got.req)
+	}
+	if got.req.Headline != "LivePerson (LPSN) performed a stock merger. Shareholders will receive 0.4673 new shares of SOUN." {
+		t.Fatalf("got %+v", got.req)
+	}
+	if got.req.Company != "LivePerson" || got.req.Ticker != "LPSN" {
+		t.Fatalf("got %+v", got.req)
+	}
+}
+
 func TestIngestDryRun(t *testing.T) {
-	got := execute_cli(t, "ingest", "--file", "tracker.txt", "--dry-run")
+	got := execute_cli(
+		t,
+		"ingest",
+		"--file",
+		"tracker.txt",
+		"--dry-run",
+	)
 	if got.err != nil {
 		t.Fatalf("ingest: %v", got.err)
 	}
@@ -90,7 +150,14 @@ func TestIngestDryRunRequiresFile(t *testing.T) {
 }
 
 func TestFoldFlags(t *testing.T) {
-	got := execute_cli(t, "fold", "--q", "square", "--qty", "10")
+	got := execute_cli(
+		t,
+		"fold",
+		"--q",
+		"square",
+		"--qty",
+		"10",
+	)
 	if got.err != nil {
 		t.Fatalf("fold: %v", got.err)
 	}
@@ -100,7 +167,13 @@ func TestFoldFlags(t *testing.T) {
 }
 
 func TestLeftoverPositionalRejected(t *testing.T) {
-	got := execute_cli(t, "parse", "--file", "tracker.txt", "extra")
+	got := execute_cli(
+		t,
+		"parse",
+		"--file",
+		"tracker.txt",
+		"extra",
+	)
 	if got.err == nil || got.called {
 		t.Fatal("expected leftover positional to fail")
 	}
