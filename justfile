@@ -161,10 +161,11 @@ unsuspend:
 suspend:
     kubectl --context {{profile}} -n {{ns}} patch cronjob corporate-actions --type merge -p '{"spec":{"suspend":true}}'
 
-# Gap A capstone: stack up, seed gold fixtures, verify Bolt, smoke HTTP, confirm fold tables.
+# Gap A capstone: stack up, smoke HTTP, confirm fold tables.
 # CronJob stays suspended unless just egress && just unsuspend.
-gap-a: wait healthz ping seed verify smoke gold
-    @echo "Gap A HTTP+Bolt proof passed. CronJob still suspended; just egress && just unsuspend when Robinhood is reachable."
+# Ping/seed/verify are unit tests in //ingest_jobs/corporate_actions/tools:tools_test.
+gap-a: wait healthz smoke gold
+    @echo "Gap A HTTP proof passed. CronJob still suspended; just egress && just unsuspend when Robinhood is reachable."
 
 # Open k9s on this cluster in the fintech-fun namespace.
 k9s:
@@ -173,13 +174,13 @@ k9s:
 # Re-fetch the tracker, prefix-dedup the full history, MERGE only the new suffix.
 # waiting rows stay; a later cashed_out/now_different_stock is a new Event.
 refresh:
-    bazel run //ingest_jobs/corporate_actions -- refresh
+    just live
 
 # Dry-run ingest against a tracker file. Example: just dry-run path/to/tracker.txt
 dry-run file:
     bazel run //ingest_jobs/corporate_actions -- --dry-run --file {{file}}
 
-# Host → NodePort Bolt/Qdrant. Example: just live ping
+# Host → NodePort Bolt/Qdrant. Example: just live --file path/to/tracker.txt
 live *args:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -190,18 +191,6 @@ live *args:
     export QDRANT_URL="http://${host}:30333"
     bazel run //ingest_jobs/corporate_actions -- {{args}}
 
-# Reach Neo4j + Qdrant on the local cluster NodePorts.
-ping:
-    just live ping
-
-# Seed Notion fixtures (gold path for verify).
-seed:
-    just live seed
-
 # Ingest a tracker file or fetch live. Example: just ingest --file path/to/tracker.txt
 ingest *args:
     just live {{args}}
-
-# Memory gold + live Bolt gold (nflx…ftel) when the cluster is up.
-verify:
-    just live verify

@@ -41,4 +41,4 @@ bazel run //ingest_jobs/corporate_actions -- --dry-run --file \
   "$PWD/agents/skills/ingest/robinhood/corporate_actions/testdata/tracker_sept_2026.txt"
 ```
 
-`just` lists every recipe. The corporate-actions CronJob starts suspended; use `just refresh` after Robinhood is reachable.
+`just` lists every recipe. The corporate-actions CronJob starts suspended; use `just refresh` (live ingest) after Robinhood is reachable.

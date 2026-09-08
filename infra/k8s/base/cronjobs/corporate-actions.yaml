@@ -15,5 +15,3 @@ spec:
             - name: corporate-actions
               image: fintech-fun/corporate-actions:local
               imagePullPolicy: IfNotPresent
-              args:
-                - refresh
