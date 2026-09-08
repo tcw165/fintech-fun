@@ -6,22 +6,22 @@ import (
 	"github.com/tcw165/fintech-fun/graph/examples"
 )
 
-type stubClient struct {
+type stub_client struct {
 	collections []string
 	upserts     int
 }
 
-func (c *stubClient) PutCollection(name string, body map[string]any) (map[string]any, error) {
+func (c *stub_client) PutCollection(name string, body map[string]any) (map[string]any, error) {
 	c.collections = append(c.collections, name)
 	return map[string]any{"status": "ok"}, nil
 }
 
-func (c *stubClient) Upsert(name string, body map[string]any) (map[string]any, error) {
+func (c *stub_client) Upsert(name string, body map[string]any) (map[string]any, error) {
 	c.upserts++
 	return map[string]any{"status": "ok", "name": name, "body": body}, nil
 }
 
-func (c *stubClient) Search(name string, body map[string]any) (map[string]any, error) {
+func (c *stub_client) Search(name string, body map[string]any) (map[string]any, error) {
 	return map[string]any{"status": "ok", "name": name, "body": body}, nil
 }
 
@@ -70,7 +70,7 @@ func TestEventPointRejectsWrongDim(t *testing.T) {
 }
 
 func TestEnsureAndUpsertUseCorporateActions(t *testing.T) {
-	client := &stubClient{}
+	client := &stub_client{}
 	if _, err := EnsureCollection(client); err != nil {
 		t.Fatal(err)
 	}

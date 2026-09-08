@@ -35,29 +35,29 @@ func Fold(company graph.Company, stock graph.Stock, events []graph.Event, qty fl
 		}
 		return ordered[i].Date.Before(ordered[j].Date)
 	})
-	qtyNow := qty
+	qty_now := qty
 	cash := 0.0
 	rows := make([]Row, 0, len(ordered))
 	for _, event := range ordered {
-		qtyAfter := graph.QtyAfter(qtyNow, event)
-		cashThis := graph.EventCash(qtyNow, event)
+		qty_after := graph.QtyAfter(qty_now, event)
+		cash_this := graph.EventCash(qty_now, event)
 		rows = append(rows, Row{
 			Date:          event.Date,
 			Kind:          event.Kind,
-			QtyBefore:     qtyNow,
-			QtyAfter:      qtyAfter,
-			CashThisEvent: cashThis,
+			QtyBefore:     qty_now,
+			QtyAfter:      qty_after,
+			CashThisEvent: cash_this,
 			NowHolds:      event.YouNowHold,
 		})
-		qtyNow = qtyAfter
-		cash += cashThis
+		qty_now = qty_after
+		cash += cash_this
 	}
 	return Result{
 		Company:      company.Name,
 		TickerNow:    stock.Ticker,
 		Status:       stock.Status,
 		QtyStarted:   qty,
-		QtyNow:       qtyNow,
+		QtyNow:       qty_now,
 		CashReceived: cash,
 		Series:       rows,
 	}

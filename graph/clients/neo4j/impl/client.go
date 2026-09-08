@@ -13,16 +13,16 @@ const (
 	Password = "fintechfun"
 )
 
-func envOr(key, fallback string) string {
+func env_or(key, fallback string) string {
 	if value := os.Getenv(key); value != "" {
 		return value
 	}
 	return fallback
 }
 
-func URIFromEnv() string      { return envOr("NEO4J_URI", URI) }
-func UserFromEnv() string     { return envOr("NEO4J_USER", User) }
-func PasswordFromEnv() string { return envOr("NEO4J_PASSWORD", Password) }
+func URIFromEnv() string      { return env_or("NEO4J_URI", URI) }
+func UserFromEnv() string     { return env_or("NEO4J_USER", User) }
+func PasswordFromEnv() string { return env_or("NEO4J_PASSWORD", Password) }
 
 // Func adapts a callback to neo4j.Client. The official driver lands here later.
 type Func func(cypher string, params map[string]any) ([]map[string]any, error)

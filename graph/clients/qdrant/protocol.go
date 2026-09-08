@@ -37,9 +37,9 @@ func PointID(event graph.Event) string {
 }
 
 func EventPayload(event graph.Event) map[string]any {
-	var youNowHold any
+	var you_now_hold any
 	if event.YouNowHold != "" {
-		youNowHold = event.YouNowHold
+		you_now_hold = event.YouNowHold
 	}
 	return map[string]any{
 		"event_id":         event.ID(),
@@ -47,7 +47,7 @@ func EventPayload(event graph.Event) map[string]any {
 		"kind":             string(event.Kind),
 		"headline":         event.Headline,
 		"happened_to":      event.HappenedTo,
-		"you_now_hold":     youNowHold,
+		"you_now_hold":     you_now_hold,
 		"share_multiplier": event.ShareMultiplier,
 		"cash_per_share":   event.CashPerShare,
 	}

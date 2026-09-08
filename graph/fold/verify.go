@@ -18,7 +18,7 @@ type Expectation struct {
 }
 
 func Expectations() []Expectation {
-	ftelQty := 10.0 / 16 / 8 / 7 / 9
+	ftel_qty := 10.0 / 16 / 8 / 7 / 9
 	return []Expectation{
 		{Q: "nflx", Qty: 10, Company: "Netflix", Ticker: "NFLX", QtyNow: 100, Series: 1},
 		{Q: "mnts", Qty: 140, Company: "Momentus", Ticker: "MNTS", QtyNow: 10, Series: 1},
@@ -28,7 +28,7 @@ func Expectations() []Expectation {
 		{Q: "block", Qty: 10, Company: "Block", Ticker: "XYZ", QtyNow: 10, Series: 1},
 		{Q: "sq", Qty: 10, Company: "Block", Ticker: "XYZ", QtyNow: 10, Series: 1},
 		{Q: "xyz", Qty: 10, Company: "Block", Ticker: "XYZ", QtyNow: 10, Series: 1},
-		{Q: "ftel", Qty: 10, Company: "GMEX Robotics", Ticker: "GMEX", QtyNow: ftelQty, Series: 6},
+		{Q: "ftel", Qty: 10, Company: "GMEX Robotics", Ticker: "GMEX", QtyNow: ftel_qty, Series: 6},
 	}
 }
 

@@ -11,7 +11,7 @@ func ApplyConstraints(client Client) error {
 	return nil
 }
 
-func issuerParams(company graph.Company, stock graph.Stock) map[string]any {
+func issuer_params(company graph.Company, stock graph.Stock) map[string]any {
 	aliases := company.AlsoKnownAs
 	if aliases == nil {
 		aliases = []string{}
@@ -30,17 +30,17 @@ func issuerParams(company graph.Company, stock graph.Stock) map[string]any {
 }
 
 func UpsertCompany(client Client, company graph.Company) ([]map[string]any, error) {
-	return client.Run(UpsertIssuerCypher(), issuerParams(company, graph.Stock{Ticker: company.Name}))
+	return client.Run(UpsertIssuerCypher(), issuer_params(company, graph.Stock{Ticker: company.Name}))
 }
 
 func UpsertStock(client Client, company graph.Company, stock graph.Stock) ([]map[string]any, error) {
-	return client.Run(UpsertIssuerCypher(), issuerParams(company, stock))
+	return client.Run(UpsertIssuerCypher(), issuer_params(company, stock))
 }
 
 func UpsertEvent(client Client, event graph.Event) ([]map[string]any, error) {
-	var youNowHold any
+	var you_now_hold any
 	if event.YouNowHold != "" {
-		youNowHold = event.YouNowHold
+		you_now_hold = event.YouNowHold
 	}
 	return client.Run(UpsertEventCypher(), map[string]any{
 		"id":               event.ID(),
@@ -52,7 +52,7 @@ func UpsertEvent(client Client, event graph.Event) ([]map[string]any, error) {
 		"keep_fractionals": event.KeepFractionals,
 		"can_trade":        event.CanTrade,
 		"happened_to":      event.HappenedTo,
-		"you_now_hold":     youNowHold,
+		"you_now_hold":     you_now_hold,
 	})
 }
 
@@ -96,11 +96,11 @@ func ReadSource(client Client, id string) (SourceWatermark, error) {
 		out.PageSHA256 = hash
 	}
 	out.FetchedAt = rows[0]["fetched_at"]
-	out.HistoryPrefix = asStringSlice(rows[0]["history_prefix"])
+	out.HistoryPrefix = as_string_slice(rows[0]["history_prefix"])
 	return out, nil
 }
 
-func asStringSlice(value any) []string {
+func as_string_slice(value any) []string {
 	switch items := value.(type) {
 	case []string:
 		return append([]string(nil), items...)
@@ -117,22 +117,22 @@ func asStringSlice(value any) []string {
 	}
 }
 
-func UpsertSource(client Client, id, pageSHA256 string) error {
+func UpsertSource(client Client, id, page_sha256 string) error {
 	_, err := client.Run(UpsertSourceCypher(), map[string]any{
 		"id":           id,
-		"page_sha256":  pageSHA256,
+		"page_sha256":  page_sha256,
 	})
 	return err
 }
 
-func UpsertSourceState(client Client, id, pageSHA256 string, historyPrefix []string) error {
-	if historyPrefix == nil {
-		historyPrefix = []string{}
+func UpsertSourceState(client Client, id, page_sha256 string, history_prefix []string) error {
+	if history_prefix == nil {
+		history_prefix = []string{}
 	}
 	_, err := client.Run(UpsertSourceStateCypher(), map[string]any{
 		"id":             id,
-		"page_sha256":    pageSHA256,
-		"history_prefix": historyPrefix,
+		"page_sha256":    page_sha256,
+		"history_prefix": history_prefix,
 	})
 	return err
 }

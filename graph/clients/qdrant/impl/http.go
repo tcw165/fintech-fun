@@ -15,15 +15,22 @@ import (
 
 // HTTP is the official Qdrant REST client. Child of //graph/clients/qdrant.
 type HTTP struct {
-	BaseURL string
-	Client  *http.Client
+	base_url    string
+	http_client *http.Client
 }
 
-func NewHTTP(baseURL string) *HTTP {
+func NewHTTP(base_url string) *HTTP {
 	return &HTTP{
-		BaseURL: strings.TrimRight(baseURL, "/"),
-		Client:  &http.Client{Timeout: 15 * time.Second},
+		base_url:    strings.TrimRight(base_url, "/"),
+		http_client: &http.Client{Timeout: 15 * time.Second},
 	}
+}
+
+func (c *HTTP) BaseURL() string {
+	if c == nil {
+		return ""
+	}
+	return c.base_url
 }
 
 func URLFromEnv() string {
@@ -50,7 +57,7 @@ func (c *HTTP) Search(name string, body map[string]any) (map[string]any, error) 
 }
 
 func (c *HTTP) do(method, path string, body map[string]any) (map[string]any, error) {
-	if c == nil || c.BaseURL == "" {
+	if c == nil || c.base_url == "" {
 		return nil, fmt.Errorf("qdrant http client has no base URL")
 	}
 	var reader io.Reader
@@ -61,12 +68,12 @@ func (c *HTTP) do(method, path string, body map[string]any) (map[string]any, err
 		}
 		reader = bytes.NewReader(raw)
 	}
-	req, err := http.NewRequest(method, c.BaseURL+path, reader)
+	req, err := http.NewRequest(method, c.base_url+path, reader)
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	client := c.Client
+	client := c.http_client
 	if client == nil {
 		client = http.DefaultClient
 	}

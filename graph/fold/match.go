@@ -36,11 +36,11 @@ func MatchRows(rows []map[string]any, want Expectation) Check {
 		return check
 	}
 	row := rows[0]
-	check.GotQty = asFloat(row["qty_now"])
-	check.GotCash = asFloat(first(row["cash_received"], row["cash"]))
-	company := asString(row["company"])
-	ticker := asString(first(row["ticker_now"], row["ticker"]))
-	series := seriesLen(row["series"])
+	check.GotQty = as_float(row["qty_now"])
+	check.GotCash = as_float(first(row["cash_received"], row["cash"]))
+	company := as_string(row["company"])
+	ticker := as_string(first(row["ticker_now"], row["ticker"]))
+	series := series_len(row["series"])
 	if company != want.Company || ticker != want.Ticker {
 		check.Error = "identity"
 	} else if want.Series > 0 && series > 0 && series < want.Series {
@@ -64,7 +64,7 @@ func first(values ...any) any {
 	return nil
 }
 
-func asString(value any) string {
+func as_string(value any) string {
 	switch typed := value.(type) {
 	case string:
 		return typed
@@ -73,7 +73,7 @@ func asString(value any) string {
 	}
 }
 
-func asFloat(value any) float64 {
+func as_float(value any) float64 {
 	switch typed := value.(type) {
 	case float64:
 		return typed
@@ -85,7 +85,7 @@ func asFloat(value any) float64 {
 		return float64(typed)
 	case int32:
 		return float64(typed)
-	case jsonNumber:
+	case json_number:
 		f, _ := typed.Float64()
 		return f
 	case string:
@@ -96,11 +96,11 @@ func asFloat(value any) float64 {
 	}
 }
 
-type jsonNumber interface {
+type json_number interface {
 	Float64() (float64, error)
 }
 
-func seriesLen(value any) int {
+func series_len(value any) int {
 	switch typed := value.(type) {
 	case []any:
 		return len(typed)

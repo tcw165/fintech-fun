@@ -8,14 +8,14 @@ import (
 	"github.com/tcw165/fintech-fun/graph/examples"
 )
 
-type stubClient struct {
+type stub_client struct {
 	calls []struct {
 		cypher string
 		params map[string]any
 	}
 }
 
-func (s *stubClient) Run(cypher string, params map[string]any) ([]map[string]any, error) {
+func (s *stub_client) Run(cypher string, params map[string]any) ([]map[string]any, error) {
 	s.calls = append(s.calls, struct {
 		cypher string
 		params map[string]any
@@ -42,7 +42,7 @@ func TestSeriesCypherResolvesAliasAndFormerTicker(t *testing.T) {
 }
 
 func TestFoldRunsAccountQuery(t *testing.T) {
-	var stub stubClient
+	var stub stub_client
 	if _, err := Fold(&stub, "square", 10); err != nil {
 		t.Fatal(err)
 	}
@@ -52,7 +52,7 @@ func TestFoldRunsAccountQuery(t *testing.T) {
 }
 
 func TestSeriesRunsGraphQuery(t *testing.T) {
-	var stub stubClient
+	var stub stub_client
 	if _, err := Series(&stub, "square"); err != nil {
 		t.Fatal(err)
 	}
@@ -74,7 +74,7 @@ func TestConstraintsCoverStockEventAndIndexes(t *testing.T) {
 }
 
 func TestListEventIDsAndReadSource(t *testing.T) {
-	var stub stubClient
+	var stub stub_client
 	ids, err := ListEventIDs(&stub)
 	if err != nil || len(ids) != 0 {
 		t.Fatalf("%v %v", ids, err)
@@ -95,7 +95,7 @@ func TestListEventIDsAndReadSource(t *testing.T) {
 }
 
 func TestReadSourceHistoryPrefixFromStringSlice(t *testing.T) {
-	client := sourceClient(map[string]any{
+	client := source_client(map[string]any{
 		"page_sha256":    "abc",
 		"fetched_at":     "now",
 		"history_prefix": []string{"2026-09-03|APH|split", "2026-09-04|LPSN|merger"},
@@ -110,7 +110,7 @@ func TestReadSourceHistoryPrefixFromStringSlice(t *testing.T) {
 }
 
 func TestReadSourceHistoryPrefixFromAnySlice(t *testing.T) {
-	client := sourceClient(map[string]any{
+	client := source_client(map[string]any{
 		"page_sha256":    "def",
 		"history_prefix": []any{"a", 1, "b"},
 	})
@@ -121,7 +121,7 @@ func TestReadSourceHistoryPrefixFromAnySlice(t *testing.T) {
 }
 
 func TestUpsertSourceStateWritesPrefix(t *testing.T) {
-	var stub stubClient
+	var stub stub_client
 	prefix := []string{"2026-09-03|APH|x"}
 	if err := UpsertSourceState(&stub, graph.IngestSourceCorporateActions, "hash", prefix); err != nil {
 		t.Fatal(err)
@@ -145,7 +145,7 @@ func TestUpsertSourceStateWritesPrefix(t *testing.T) {
 }
 
 func TestUpsertSourceStateNilPrefixBecomesEmpty(t *testing.T) {
-	var stub stubClient
+	var stub stub_client
 	if err := UpsertSourceState(&stub, "src", "hash", nil); err != nil {
 		t.Fatal(err)
 	}
@@ -167,20 +167,20 @@ func TestUpsertSourceStateCypherSetsPrefix(t *testing.T) {
 	}
 }
 
-func sourceClient(row map[string]any) Client {
-	return sourceStub{row: row}
+func source_client(row map[string]any) Client {
+	return source_stub{row: row}
 }
 
-type sourceStub struct {
+type source_stub struct {
 	row map[string]any
 }
 
-func (s sourceStub) Run(string, map[string]any) ([]map[string]any, error) {
+func (s source_stub) Run(string, map[string]any) ([]map[string]any, error) {
 	return []map[string]any{s.row}, nil
 }
 
 func TestApplyConstraints(t *testing.T) {
-	var stub stubClient
+	var stub stub_client
 	if err := ApplyConstraints(&stub); err != nil {
 		t.Fatal(err)
 	}
@@ -208,7 +208,7 @@ func TestUpsertCypherUsesMergeAndRetailEdges(t *testing.T) {
 }
 
 func TestIngestNFLX(t *testing.T) {
-	var stub stubClient
+	var stub stub_client
 	c, s, e := examples.NFLX()
 	result, err := IngestGraph(&stub, c, s, e)
 	if err != nil {
@@ -235,7 +235,7 @@ func TestIngestNFLX(t *testing.T) {
 }
 
 func TestIngestLPSNSetsYouNowHold(t *testing.T) {
-	var stub stubClient
+	var stub stub_client
 	c, s, e := examples.LPSN()
 	if _, err := IngestGraph(&stub, c, s, e); err != nil {
 		t.Fatal(err)
@@ -252,7 +252,7 @@ func TestIngestLPSNSetsYouNowHold(t *testing.T) {
 }
 
 func TestIngestAPGEStoresCash(t *testing.T) {
-	var stub stubClient
+	var stub stub_client
 	c, s, e := examples.APGE()
 	if _, err := IngestGraph(&stub, c, s, e); err != nil {
 		t.Fatal(err)

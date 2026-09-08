@@ -77,15 +77,15 @@ func (e Event) ID() string {
 // Robinhood tracker. Re-runs compare page SHA-256 against this node.
 const IngestSourceCorporateActions = "robinhood/corporate_actions"
 
-func QtyAfter(qtyBefore float64, event Event) float64 {
+func QtyAfter(qty_before float64, event Event) float64 {
 	if event.Kind == KindReverseSplit {
-		return qtyBefore / event.ShareMultiplier
+		return qty_before / event.ShareMultiplier
 	}
-	return qtyBefore * event.ShareMultiplier
+	return qty_before * event.ShareMultiplier
 }
 
-func EventCash(qtyBefore float64, event Event) float64 {
-	return qtyBefore * event.CashPerShare
+func EventCash(qty_before float64, event Event) float64 {
+	return qty_before * event.CashPerShare
 }
 
 func Multiplies(kind EventKind) bool {
