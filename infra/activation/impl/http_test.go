@@ -45,7 +45,12 @@ func (stub_graph) Source() (contract.SourceResponse, error) {
 }
 
 func TestSmokeAgainstStubAPI(t *testing.T) {
-	srv := httptest.NewServer(apiimpl.New(apiimpl.StaticOK{}, stub_fold{}, stub_search{}, stub_graph{}))
+	srv := httptest.NewServer(apiimpl.New(
+		apiimpl.StaticOK{},
+		stub_fold{},
+		stub_search{},
+		stub_graph{},
+	))
 	t.Cleanup(srv.Close)
 	report := impl.HTTP{}.Smoke(srv.URL)
 	if !report.AllOK() {
@@ -61,7 +66,12 @@ func TestHealthFailsWhenDown(t *testing.T) {
 }
 
 func TestGoldAgainstStubAPI(t *testing.T) {
-	srv := httptest.NewServer(apiimpl.New(apiimpl.StaticOK{}, stub_fold{}, stub_search{}, stub_graph{}))
+	srv := httptest.NewServer(apiimpl.New(
+		apiimpl.StaticOK{},
+		stub_fold{},
+		stub_search{},
+		stub_graph{},
+	))
 	t.Cleanup(srv.Close)
 	report := impl.HTTP{}.Gold(srv.URL)
 	if !report.AllOK() || len(report.Steps) != 6 {
