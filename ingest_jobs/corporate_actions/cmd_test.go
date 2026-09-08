@@ -18,16 +18,16 @@ type exec_result struct {
 func execute_cli(t *testing.T, args ...string) exec_result {
 	t.Helper()
 	var got exec_result
-	cmd := new_root(func(req request.Request) error {
+	cli := cmd(func(req request.Request) error {
 		got.called = true
 		got.req = req
 		return nil
 	})
 	var buf bytes.Buffer
-	cmd.SetOut(&buf)
-	cmd.SetErr(&buf)
-	cmd.SetArgs(args)
-	got.err = cmd.Execute()
+	cli.SetOut(&buf)
+	cli.SetErr(&buf)
+	cli.SetArgs(args)
+	got.err = cli.Execute()
 	got.out = buf.String()
 	return got
 }
