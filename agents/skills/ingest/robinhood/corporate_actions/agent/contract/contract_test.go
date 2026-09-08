@@ -16,6 +16,13 @@ func TestPayloadIncludesPaginationAndOmitsRefresh(t *testing.T) {
 	}
 }
 
+func TestPayloadDryRun(t *testing.T) {
+	out := Result{DryRun: true, Written: 12, Skipped: 2}.Payload()
+	if out["dry_run"] != true || out["written"] != 12 || out["skipped"] != 2 {
+		t.Fatalf("%v", out)
+	}
+}
+
 func TestPayloadRefreshAndBackfill(t *testing.T) {
 	out := Result{Refresh: true, WaitingPolicy: WaitingPolicy, Backfilled: true}.Payload()
 	if out["refresh"] != true || out["waiting_policy"] != WaitingPolicy || out["backfilled"] != true {

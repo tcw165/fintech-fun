@@ -146,6 +146,40 @@ func TestIngestTextPaginatesLargeDay(t *testing.T) {
 	}
 }
 
+func TestDryRunTextDoesNotWrite(t *testing.T) {
+	store := new_memory_store()
+	result, err := New(store, &qdrantimpl.Recording{}, lexical.New(), nil).DryRunText(testdata.TrackerSept2026)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !result.DryRun || result.Written < 12 || result.Unchanged {
+		t.Fatalf("%+v", result)
+	}
+	if store.event_upserts != 0 || store.source_state_writes != 0 {
+		t.Fatalf("writes upserts=%d source=%d", store.event_upserts, store.source_state_writes)
+	}
+}
+
+func TestDryRunTextWorksOffline(t *testing.T) {
+	result, err := New(nil, nil, nil, nil).DryRunText(testdata.TrackerSept2026)
+	if err != nil || !result.DryRun || result.Written < 12 {
+		t.Fatalf("%+v %v", result, err)
+	}
+}
+
+func TestDryRunLiveUsesFetcher(t *testing.T) {
+	store := new_memory_store()
+	result, err := New(
+		store,
+		&qdrantimpl.Recording{},
+		lexical.New(),
+		stub_fetcher{text: testdata.TrackerSept2026},
+	).DryRunLive("")
+	if err != nil || !result.DryRun || result.Written < 12 || store.event_upserts != 0 {
+		t.Fatalf("%+v upserts=%d err=%v", result, store.event_upserts, err)
+	}
+}
+
 func TestRefreshUsesFetcherAndWaitingPolicy(t *testing.T) {
 	store := new_memory_store()
 	result, err := New(store, &qdrantimpl.Recording{}, lexical.New(), stub_fetcher{text: testdata.TrackerSept2026}).Refresh("")

@@ -2,11 +2,11 @@ package tools
 
 import (
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/agent"
 	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/classify"
-	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/ingest"
 	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/parser"
 	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/testdata"
 	"github.com/tcw165/fintech-fun/graph/clients/neo4j"
@@ -90,10 +90,48 @@ func TestIngestDryRunPlansWithoutClients(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	plan := payload.(ingest.PlanResult)
-	if !plan.DryRun || plan.Written < 12 {
-		t.Fatalf("%+v", plan)
+	out := payload.(map[string]any)
+	if out["dry_run"] != true {
+		t.Fatalf("%v", out)
 	}
+	written, _ := out["written"].(int)
+	if written < 12 {
+		t.Fatalf("%v", out)
+	}
+}
+
+func TestIngestDryRunDoesNotWrite(t *testing.T) {
+	path := write_temp(t, testdata.TrackerSept2026)
+	graph_db := &neo4jimpl.Recording{}
+	vector_db := &qdrantimpl.Recording{}
+	payload, err := Run(
+		test_deps(graph_db, vector_db),
+		request.Request{Name: "ingest", File: path, DryRun: true},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	out := payload.(map[string]any)
+	if out["dry_run"] != true {
+		t.Fatalf("%v", out)
+	}
+	if vector_db.Upserts != 0 {
+		t.Fatalf("qdrant writes=%d", vector_db.Upserts)
+	}
+	for _, call := range graph_db.Calls {
+		if contains_write(call.Cypher) {
+			t.Fatalf("neo4j write: %s", call.Cypher)
+		}
+	}
+}
+
+func contains_write(cypher string) bool {
+	for _, verb := range []string{"CREATE", "MERGE", "SET ", "DELETE", "REMOVE"} {
+		if strings.Contains(cypher, verb) {
+			return true
+		}
+	}
+	return false
 }
 
 func TestFoldIssuesAccountQuery(t *testing.T) {

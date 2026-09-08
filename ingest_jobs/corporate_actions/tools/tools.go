@@ -63,8 +63,17 @@ func Run(deps Deps, req request.Request) (any, error) {
 }
 
 func run_ingest(deps Deps, req request.Request) (any, error) {
+	ingest_agent := deps.Agent
+	if ingest_agent == nil {
+		ingest_agent = agent.New(
+			deps.GraphClient,
+			deps.VectorsClient,
+			deps.Embedder,
+			nil,
+		)
+	}
 	if req.DryRun {
-		return run_plan(req)
+		return run_dry_run(ingest_agent, req)
 	}
 	if err := require_clients(deps, "ingest"); err != nil {
 		return nil, err
@@ -74,13 +83,32 @@ func run_ingest(deps Deps, req request.Request) (any, error) {
 		if err != nil {
 			return nil, err
 		}
-		result, err := deps.Agent.IngestText(string(data))
+		result, err := ingest_agent.IngestText(string(data))
 		if err != nil {
 			return nil, err
 		}
 		return result.Payload(), nil
 	}
-	result, err := deps.Agent.IngestLive("")
+	result, err := ingest_agent.IngestLive("")
+	if err != nil {
+		return nil, err
+	}
+	return result.Payload(), nil
+}
+
+func run_dry_run(ingest_agent *agent.Agent, req request.Request) (any, error) {
+	if req.File != "" {
+		data, err := os.ReadFile(req.File)
+		if err != nil {
+			return nil, err
+		}
+		result, err := ingest_agent.DryRunText(string(data))
+		if err != nil {
+			return nil, err
+		}
+		return result.Payload(), nil
+	}
+	result, err := ingest_agent.DryRunLive("")
 	if err != nil {
 		return nil, err
 	}

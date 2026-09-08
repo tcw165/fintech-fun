@@ -96,6 +96,28 @@ func TestUnknownCommand(t *testing.T) {
 	}
 }
 
+func TestLogDryRunIsMinimal(t *testing.T) {
+	var buf bytes.Buffer
+	err := log_dry_run(
+		&buf,
+		map[string]any{
+			"written":   12,
+			"skipped":   2,
+			"unchanged": false,
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := buf.String()
+	if got != "dry-run would_write=12 skipped=2 unchanged=false\n" {
+		t.Fatalf("%q", got)
+	}
+	if strings.Contains(got, "{") {
+		t.Fatalf("not minimal: %q", got)
+	}
+}
+
 func TestHelpRoot(t *testing.T) {
 	got := execute_cli(t, "--help")
 	if got.err != nil {
