@@ -17,7 +17,12 @@ type AppContext struct {
 	closer    func(context.Context) error
 }
 
-func New(graph_db neo4j.Client, vector_db qdrant.Client, embedder embed.Embedder, closer func(context.Context) error) *AppContext {
+func New(
+	graph_db neo4j.Client,
+	vector_db qdrant.Client,
+	embedder embed.Embedder,
+	closer func(context.Context) error,
+) *AppContext {
 	return &AppContext{
 		graph_db:  graph_db,
 		vector_db: vector_db,
@@ -56,7 +61,17 @@ func (c *AppContext) Embedder() embed.Embedder {
 
 func (c *AppContext) Agent() *agent.Agent {
 	if c == nil {
-		return agent.New(nil, nil, nil, nil)
+		return agent.New(
+			nil,
+			nil,
+			nil,
+			nil,
+		)
 	}
-	return agent.New(c.graph_db, c.vector_db, c.embedder, agent.LiveFetcher{})
+	return agent.New(
+		c.graph_db,
+		c.vector_db,
+		c.embedder,
+		agent.LiveFetcher{},
+	)
 }
