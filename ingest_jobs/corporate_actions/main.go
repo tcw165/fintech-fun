@@ -35,17 +35,23 @@ func main() {
 }
 
 func run(ctx context.Context, req request.Request) error {
-	app, err := di.NewFromEnv(ctx, req.Name)
+	app, err := di.Boot(
+		ctx,
+		di.ClientName(req.Name, req.DryRun),
+	)
 	if err != nil {
 		return err
 	}
 	defer app.Close(ctx)
-	payload, err := tools.Run(tools.Deps{
-		GraphClient:   app.GraphClient(),
-		VectorsClient: app.VectorsClient(),
-		Embedder:      app.Embedder(),
-		Agent:         app.Agent(),
-	}, req)
+	payload, err := tools.Run(
+		tools.Deps{
+			GraphClient:   app.GraphClient(),
+			VectorsClient: app.VectorsClient(),
+			Embedder:      app.Embedder(),
+			Agent:         app.Agent(),
+		},
+		req,
+	)
 	if err != nil {
 		return err
 	}
