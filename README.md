@@ -37,7 +37,7 @@ just down            # stop the VM
 Offline ingest tools (fixture file, no live Neo4j/Qdrant):
 
 ```bash
-bazel run //ingest_jobs/corporate_actions -- parse \
+bazel run //ingest_jobs/corporate_actions -- parse --file \
   "$PWD/agents/skills/ingest/robinhood/corporate_actions/testdata/tracker_sept_2026.txt"
 ```
 
