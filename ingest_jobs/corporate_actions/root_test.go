@@ -37,131 +37,32 @@ func TestDefaultIngest(t *testing.T) {
 	if got.err != nil {
 		t.Fatalf("empty: %v", got.err)
 	}
-	if !got.called || got.req.Name != "" {
-		t.Fatalf("got %+v, want empty Name so tools default to ingest", got.req)
+	if !got.called || got.req.Name != "ingest" {
+		t.Fatalf("got %+v, want ingest", got.req)
 	}
 }
 
-func TestParseForwardsFile(t *testing.T) {
+func TestFileAndDryRunFlags(t *testing.T) {
 	got := execute_cli(
 		t,
-		"parse",
-		"--file",
-		"tracker.txt",
-	)
-	if got.err != nil {
-		t.Fatalf("parse: %v", got.err)
-	}
-	if got.req.Name != "parse" || got.req.File != "tracker.txt" {
-		t.Fatalf("got %+v", got.req)
-	}
-}
-
-func TestParseRequiresFile(t *testing.T) {
-	got := execute_cli(t, "parse")
-	if got.err == nil || got.called {
-		t.Fatal("expected required --file")
-	}
-	if !strings.Contains(got.err.Error(), "file") {
-		t.Fatalf("got %v", got.err)
-	}
-}
-
-func TestSearchFlags(t *testing.T) {
-	got := execute_cli(
-		t,
-		"search",
-		"--query",
-		"LivePerson stock merger",
-		"--limit",
-		"3",
-	)
-	if got.err != nil {
-		t.Fatalf("search: %v", got.err)
-	}
-	if got.req.Name != "search" || got.req.Query != "LivePerson stock merger" || got.req.Limit != 3 {
-		t.Fatalf("got %+v", got.req)
-	}
-}
-
-func TestSearchCollapsesMultilineQuery(t *testing.T) {
-	got := execute_cli(
-		t,
-		"search",
-		"--query",
-		"LivePerson\nstock\nmerger",
-	)
-	if got.err != nil {
-		t.Fatalf("search: %v", got.err)
-	}
-	if got.req.Name != "search" || got.req.Query != "LivePerson stock merger" {
-		t.Fatalf("got %+v", got.req)
-	}
-}
-
-func TestClassifyForwardsMultilineHeadline(t *testing.T) {
-	got := execute_cli(
-		t,
-		"classify",
-		"--date",
-		"2026-09-04",
-		"--headline",
-		"LivePerson (LPSN) performed a stock merger.\nShareholders will receive 0.4673 new shares of SOUN.",
-		"--company",
-		"LivePerson",
-		"--ticker",
-		"LPSN",
-	)
-	if got.err != nil {
-		t.Fatalf("classify: %v", got.err)
-	}
-	if got.req.Name != "classify" || got.req.Date != "2026-09-04" {
-		t.Fatalf("got %+v", got.req)
-	}
-	if got.req.Headline != "LivePerson (LPSN) performed a stock merger. Shareholders will receive 0.4673 new shares of SOUN." {
-		t.Fatalf("got %+v", got.req)
-	}
-	if got.req.Company != "LivePerson" || got.req.Ticker != "LPSN" {
-		t.Fatalf("got %+v", got.req)
-	}
-}
-
-func TestIngestDryRun(t *testing.T) {
-	got := execute_cli(
-		t,
-		"ingest",
 		"--file",
 		"tracker.txt",
 		"--dry-run",
 	)
 	if got.err != nil {
-		t.Fatalf("ingest: %v", got.err)
+		t.Fatalf("flags: %v", got.err)
 	}
 	if got.req.Name != "ingest" || got.req.File != "tracker.txt" || !got.req.DryRun {
 		t.Fatalf("got %+v", got.req)
 	}
 }
 
-func TestIngestDryRunRequiresFile(t *testing.T) {
-	got := execute_cli(t, "ingest", "--dry-run")
-	if got.err == nil || got.called {
-		t.Fatal("expected --dry-run to require --file")
-	}
-}
-
-func TestFoldFlags(t *testing.T) {
-	got := execute_cli(
-		t,
-		"fold",
-		"--q",
-		"square",
-		"--qty",
-		"10",
-	)
+func TestDryRunWithoutFile(t *testing.T) {
+	got := execute_cli(t, "--dry-run")
 	if got.err != nil {
-		t.Fatalf("fold: %v", got.err)
+		t.Fatalf("dry-run: %v", got.err)
 	}
-	if got.req.Name != "fold" || got.req.Q != "square" || got.req.Qty != 10 {
+	if !got.called || !got.req.DryRun || got.req.File != "" {
 		t.Fatalf("got %+v", got.req)
 	}
 }
@@ -169,7 +70,6 @@ func TestFoldFlags(t *testing.T) {
 func TestLeftoverPositionalRejected(t *testing.T) {
 	got := execute_cli(
 		t,
-		"parse",
 		"--file",
 		"tracker.txt",
 		"extra",
@@ -190,7 +90,7 @@ func TestRefresh(t *testing.T) {
 }
 
 func TestUnknownCommand(t *testing.T) {
-	got := execute_cli(t, "nope")
+	got := execute_cli(t, "parse")
 	if got.err == nil || got.called {
 		t.Fatal("expected unknown command")
 	}
@@ -204,33 +104,10 @@ func TestHelpRoot(t *testing.T) {
 	if got.called {
 		t.Fatal("help must not run ingest")
 	}
-	if !strings.Contains(got.out, "Available Commands") || !strings.Contains(got.out, "parse") {
+	if !strings.Contains(got.out, "--dry-run") || !strings.Contains(got.out, "--file") {
 		t.Fatalf("help:\n%s", got.out)
 	}
-}
-
-func TestHelpParse(t *testing.T) {
-	got := execute_cli(t, "parse", "--help")
-	if got.err != nil {
-		t.Fatalf("parse help: %v", got.err)
-	}
-	if got.called {
-		t.Fatal("help must not run parse")
-	}
-	if !strings.Contains(got.out, "--file") {
-		t.Fatalf("parse help:\n%s", got.out)
-	}
-}
-
-func TestHelpSearch(t *testing.T) {
-	got := execute_cli(t, "help", "search")
-	if got.err != nil {
-		t.Fatalf("help search: %v", got.err)
-	}
-	if got.called {
-		t.Fatal("help must not run search")
-	}
-	if !strings.Contains(got.out, "--limit") {
-		t.Fatalf("help search:\n%s", got.out)
+	if strings.Contains(got.out, "  parse") {
+		t.Fatalf("dropped toolkit command still listed:\n%s", got.out)
 	}
 }

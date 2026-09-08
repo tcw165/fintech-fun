@@ -1,281 +1,61 @@
-// Cobra tree for the corporate_actions job binary. Lives next to main, like api_server/cmd.
 package main
 
 import (
-	"fmt"
-	"strings"
-
 	"github.com/spf13/cobra"
 	"github.com/tcw165/fintech-fun/ingest_jobs/corporate_actions/request"
 )
 
 type run_func func(req request.Request) error
 
-type tool_spec struct {
-	name  string
-	use   string
-	short string
-	flags func(*cobra.Command)
-}
-
 func new_root(run run_func) *cobra.Command {
+	var dry_run bool
+	var file string
+	run_ingest := func(*cobra.Command, []string) error {
+		return run(request.Request{
+			Name:   "ingest",
+			File:   file,
+			DryRun: dry_run,
+		})
+	}
 	root := &cobra.Command{
 		Use:           "corporate_actions",
-		Short:         "Robinhood corporate-actions ingest agent",
-		Long:          "Parse, classify, and ingest Robinhood tracker headlines. Empty args run the custom ingest agent.",
+		Short:         "Robinhood corporate-actions ingest",
+		Long:          "Fetch or read a tracker page, classify headlines, and ingest. --dry-run runs the same path without writing to Neo4j or Qdrant.",
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		Args:          cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, _ []string) error {
-			req, err := read_request(cmd, "")
-			if err != nil {
-				return err
-			}
-			return run(req)
-		},
+		RunE:          run_ingest,
 	}
+	root.Flags().BoolVar(
+		&dry_run,
+		"dry-run",
+		false,
+		"run E2E without writing to Neo4j or Qdrant",
+	)
+	root.Flags().StringVarP(
+		&file,
+		"file",
+		"f",
+		"",
+		"tracker page file (default: fetch live)",
+	)
 	root.CompletionOptions.DisableDefaultCmd = true
-	for _, spec := range tool_specs() {
-		root.AddCommand(new_tool_cmd(spec, run))
-	}
+	root.AddCommand(
+		new_named_cmd("refresh", "Live prefix-dedup ingest plus waiting-policy metadata", run),
+		new_named_cmd("ping", "Write NFLX fixture and read it back", run),
+		new_named_cmd("seed", "Seed Notion fixtures into Neo4j and Qdrant", run),
+		new_named_cmd("verify", "Verify memory gold and optional Bolt gold", run),
+	)
 	return root
 }
 
-func tool_specs() []tool_spec {
-	return []tool_spec{
-		{
-			name:  "parse",
-			use:   "parse",
-			short: "Parse a saved tracker page",
-			flags: flags_file_required,
-		},
-		{
-			name:  "classify",
-			use:   "classify",
-			short: "Classify one headline",
-			flags: flags_classify,
-		},
-		{
-			name:  "plan",
-			use:   "plan",
-			short: "Plan ingest writes from a saved page",
-			flags: flags_file_required,
-		},
-		{
-			name:  "fetch",
-			use:   "fetch",
-			short: "Fetch the live tracker page",
-			flags: flags_fetch,
-		},
-		{
-			name:  "gold",
-			use:   "gold",
-			short: "Classify gold report from a file or live fetch",
-			flags: flags_file_optional,
-		},
-		{
-			name:  "ingest",
-			use:   "ingest",
-			short: "Prefix-dedup ingest via the custom agent",
-			flags: flags_ingest,
-		},
-		{
-			name:  "verify",
-			use:   "verify",
-			short: "Verify memory gold and optional Bolt gold",
-		},
-		{
-			name:  "search",
-			use:   "search",
-			short: "Search Event headlines in Qdrant",
-			flags: flags_search,
-		},
-		{
-			name:  "refresh",
-			use:   "refresh",
-			short: "Live prefix-dedup ingest plus waiting-policy metadata",
-		},
-		{
-			name:  "ping",
-			use:   "ping",
-			short: "Write NFLX fixture and read it back",
-		},
-		{
-			name:  "seed",
-			use:   "seed",
-			short: "Seed Notion fixtures into Neo4j and Qdrant",
-		},
-		{
-			name:  "fold",
-			use:   "fold",
-			short: "Fold what a holder has now",
-			flags: flags_fold,
-		},
-	}
-}
-
-func new_tool_cmd(spec tool_spec, run run_func) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   spec.use,
-		Short: spec.short,
+func new_named_cmd(name, short string, run run_func) *cobra.Command {
+	return &cobra.Command{
+		Use:   name,
+		Short: short,
 		Args:  cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, _ []string) error {
-			req, err := read_request(cmd, spec.name)
-			if err != nil {
-				return err
-			}
-			if spec.name == "ingest" && req.DryRun && req.File == "" {
-				return fmt.Errorf("ingest --dry-run requires --file")
-			}
-			return run(req)
+		RunE: func(*cobra.Command, []string) error {
+			return run(request.Request{Name: name})
 		},
 	}
-	if spec.flags != nil {
-		spec.flags(cmd)
-	}
-	return cmd
-}
-
-func flags_file_required(cmd *cobra.Command) {
-	cmd.Flags().StringP(
-		"file",
-		"f",
-		"",
-		"tracker page file",
-	)
-	_ = cmd.MarkFlagRequired("file")
-}
-
-func flags_file_optional(cmd *cobra.Command) {
-	cmd.Flags().StringP(
-		"file",
-		"f",
-		"",
-		"tracker page file",
-	)
-}
-
-func flags_ingest(cmd *cobra.Command) {
-	cmd.Flags().StringP(
-		"file",
-		"f",
-		"",
-		"tracker page file",
-	)
-	cmd.Flags().Bool("dry-run", false, "plan writes without touching Neo4j or Qdrant")
-}
-
-func flags_fetch(cmd *cobra.Command) {
-	cmd.Flags().StringP(
-		"out",
-		"o",
-		"",
-		"write tracker page to this path",
-	)
-}
-
-func flags_search(cmd *cobra.Command) {
-	cmd.Flags().StringP(
-		"query",
-		"q",
-		"",
-		"headline search query",
-	)
-	cmd.Flags().IntP("limit", "n", 5, "max hits")
-	_ = cmd.MarkFlagRequired("query")
-}
-
-func flags_fold(cmd *cobra.Command) {
-	cmd.Flags().String("q", "", "holder query")
-	cmd.Flags().Float64("qty", 0, "share quantity")
-	_ = cmd.MarkFlagRequired("q")
-	_ = cmd.MarkFlagRequired("qty")
-}
-
-func flags_classify(cmd *cobra.Command) {
-	cmd.Flags().String("date", "", "headline date YYYY-MM-DD")
-	cmd.Flags().String("headline", "", "headline text")
-	cmd.Flags().String("company", "", "company name")
-	cmd.Flags().String("ticker", "", "ticker")
-	_ = cmd.MarkFlagRequired("date")
-	_ = cmd.MarkFlagRequired("headline")
-}
-
-func collapse_ws(value string) string {
-	return strings.Join(strings.Fields(value), " ")
-}
-
-func read_request(cmd *cobra.Command, name string) (request.Request, error) {
-	req := request.Request{Name: name}
-	var err error
-	if cmd.Flags().Lookup("file") != nil {
-		req.File, err = cmd.Flags().GetString("file")
-		if err != nil {
-			return req, err
-		}
-	}
-	if cmd.Flags().Lookup("out") != nil {
-		req.Out, err = cmd.Flags().GetString("out")
-		if err != nil {
-			return req, err
-		}
-	}
-	if cmd.Flags().Lookup("query") != nil {
-		req.Query, err = cmd.Flags().GetString("query")
-		if err != nil {
-			return req, err
-		}
-		req.Query = collapse_ws(req.Query)
-	}
-	if cmd.Flags().Lookup("limit") != nil {
-		req.Limit, err = cmd.Flags().GetInt("limit")
-		if err != nil {
-			return req, err
-		}
-	}
-	if cmd.Flags().Lookup("dry-run") != nil {
-		req.DryRun, err = cmd.Flags().GetBool("dry-run")
-		if err != nil {
-			return req, err
-		}
-	}
-	if cmd.Flags().Lookup("qty") != nil {
-		req.Qty, err = cmd.Flags().GetFloat64("qty")
-		if err != nil {
-			return req, err
-		}
-	}
-	if cmd.Flags().Lookup("q") != nil {
-		req.Q, err = cmd.Flags().GetString("q")
-		if err != nil {
-			return req, err
-		}
-		req.Q = collapse_ws(req.Q)
-	}
-	if cmd.Flags().Lookup("date") != nil {
-		req.Date, err = cmd.Flags().GetString("date")
-		if err != nil {
-			return req, err
-		}
-	}
-	if cmd.Flags().Lookup("headline") != nil {
-		req.Headline, err = cmd.Flags().GetString("headline")
-		if err != nil {
-			return req, err
-		}
-		req.Headline = collapse_ws(req.Headline)
-	}
-	if cmd.Flags().Lookup("company") != nil {
-		req.Company, err = cmd.Flags().GetString("company")
-		if err != nil {
-			return req, err
-		}
-	}
-	if cmd.Flags().Lookup("ticker") != nil {
-		req.Ticker, err = cmd.Flags().GetString("ticker")
-		if err != nil {
-			return req, err
-		}
-	}
-	return req, nil
 }
