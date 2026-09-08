@@ -51,16 +51,37 @@ func (c *AppContext) SetAddr(addr string) {
 	c.addr = addr
 }
 
+func (c *AppContext) GraphClient() neo4j.Client {
+	if c == nil {
+		return nil
+	}
+	return c.graph_db
+}
+
+func (c *AppContext) VectorsClient() qdrant.Client {
+	if c == nil {
+		return nil
+	}
+	return c.vector_db
+}
+
+func (c *AppContext) Embedder() embed.Embedder {
+	if c == nil {
+		return nil
+	}
+	return c.embedder
+}
+
 func (c *AppContext) Handler() http.Handler {
 	var folder contract.Folder
 	var grapher contract.Grapher
-	if c != nil && c.graph_db != nil {
-		folder = impl.Neo4jFold{Graph: c.graph_db}
-		grapher = impl.Neo4jGraph{Graph: c.graph_db}
+	if graph_client := c.GraphClient(); graph_client != nil {
+		folder = impl.Neo4jFold{GraphClient: graph_client}
+		grapher = impl.Neo4jGraph{GraphClient: graph_client}
 	}
 	var searcher contract.Searcher
-	if c != nil && c.vector_db != nil && c.embedder != nil {
-		searcher = impl.QdrantSearch{Vectors: c.vector_db, Embed: c.embedder}
+	if vector_client := c.VectorsClient(); vector_client != nil && c.Embedder() != nil {
+		searcher = impl.QdrantSearch{VectorsClient: vector_client, Embedder: c.Embedder()}
 	}
 	return impl.New(impl.StaticOK{}, folder, searcher, grapher)
 }

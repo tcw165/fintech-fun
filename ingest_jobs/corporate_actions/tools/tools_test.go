@@ -16,10 +16,10 @@ import (
 
 func test_deps(graph_db neo4j.Client, vector_db qdrant.Client) Deps {
 	return Deps{
-		Graph:   graph_db,
-		Vectors: vector_db,
-		Embed:   lexical.New(),
-		Agent:   agent.New(graph_db, vector_db, lexical.New(), nil),
+		GraphClient:   graph_db,
+		VectorsClient: vector_db,
+		Embedder:      lexical.New(),
+		Agent:         agent.New(graph_db, vector_db, lexical.New(), nil),
 	}
 }
 
@@ -105,7 +105,7 @@ func TestRefreshRequiresClients(t *testing.T) {
 
 func TestSearchUsesInjectedQdrant(t *testing.T) {
 	vector_db := &qdrantimpl.Recording{}
-	payload, err := Run(Deps{Vectors: vector_db, Embed: lexical.New()}, []string{"search", "LivePerson", "stock", "merger"})
+	payload, err := Run(Deps{VectorsClient: vector_db, Embedder: lexical.New()}, []string{"search", "LivePerson", "stock", "merger"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -128,7 +128,7 @@ func TestVerifyMatchesNotionTables(t *testing.T) {
 
 func TestVerifyIncludesBoltWhenGraphSet(t *testing.T) {
 	graph_db := &neo4jimpl.Recording{}
-	payload, err := Run(Deps{Graph: graph_db}, []string{"verify"})
+	payload, err := Run(Deps{GraphClient: graph_db}, []string{"verify"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -161,7 +161,7 @@ func TestVerifyBoltGoldMatchesFoldRows(t *testing.T) {
 		}
 		return nil, nil
 	})
-	payload, err := Run(Deps{Graph: graph_db}, []string{"verify"})
+	payload, err := Run(Deps{GraphClient: graph_db}, []string{"verify"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -174,7 +174,7 @@ func TestVerifyBoltGoldFailsOnMismatch(t *testing.T) {
 	graph_db := neo4jimpl.Func(func(string, map[string]any) ([]map[string]any, error) {
 		return []map[string]any{{"company": "Wrong", "ticker_now": "NOPE", "qty_now": 1.0}}, nil
 	})
-	_, err := Run(Deps{Graph: graph_db}, []string{"verify"})
+	_, err := Run(Deps{GraphClient: graph_db}, []string{"verify"})
 	if err == nil {
 		t.Fatal("expected bolt gold failure")
 	}
