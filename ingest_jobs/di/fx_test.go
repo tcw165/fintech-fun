@@ -34,16 +34,10 @@ func TestBootDryRunLeavesClientsNilWhenOffline(t *testing.T) {
 }
 
 func TestClientNameDryRun(t *testing.T) {
-	if got := ClientName("ingest", true); got != "dry-run" {
-		t.Fatalf("ingest dry-run = %q", got)
+	if got := ClientName(true); got != "dry-run" {
+		t.Fatalf("dry-run = %q", got)
 	}
-	if got := ClientName("", true); got != "dry-run" {
-		t.Fatalf("default dry-run = %q", got)
-	}
-	if got := ClientName("refresh", true); got != "refresh" {
-		t.Fatalf("refresh dry-run = %q", got)
-	}
-	if got := ClientName("ingest", false); got != "ingest" {
+	if got := ClientName(false); got != "ingest" {
 		t.Fatalf("ingest = %q", got)
 	}
 }

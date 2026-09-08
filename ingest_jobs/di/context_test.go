@@ -73,11 +73,8 @@ func TestCommandGating(t *testing.T) {
 	}{
 		{"", true, false},
 		{"ingest", true, false},
-		{"refresh", true, false},
-		{"ping", true, false},
-		{"seed", true, false},
-		{"verify", false, true},
 		{"dry-run", false, true},
+		{"unknown", false, false},
 	}
 	for _, tc := range cases {
 		if got := needs_live_clients(tc.name); got != tc.live {

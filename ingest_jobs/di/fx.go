@@ -17,7 +17,7 @@ type boot_request struct {
 	name string
 }
 
-// Module is the ingest-job Fx graph. name is cli_params.CliParams.Name (empty = ingest).
+// Module is the ingest-job Fx graph. name is ingest or dry-run.
 func Module(
 	ctx context.Context,
 	name string,
@@ -93,19 +93,16 @@ func provide_app(
 	)
 }
 
-// ClientName maps a parsed Request onto the Fx graph key.
-// ingest --dry-run uses optional clients so E2E can read without failing offline.
-func ClientName(
-	name string,
-	dry_run bool,
-) string {
-	if dry_run && (name == "" || name == "ingest") {
+// ClientName maps CLI dry-run onto the Fx graph key.
+// --dry-run uses optional clients so E2E can read without failing offline.
+func ClientName(dry_run bool) string {
+	if dry_run {
 		return "dry-run"
 	}
-	return name
+	return "ingest"
 }
 
-// Boot starts the ingest Fx graph for one CLI Request.Name.
+// Boot starts the ingest Fx graph for ingest or dry-run.
 func Boot(
 	ctx context.Context,
 	name string,
