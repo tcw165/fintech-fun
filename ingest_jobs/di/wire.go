@@ -7,7 +7,7 @@ func needs_live_clients(name string) bool {
 		return true
 	}
 	switch name {
-	case "ping", "seed", "fold", "ingest", "search", "refresh":
+	case "ping", "seed", "ingest", "refresh":
 		return true
 	default:
 		return false

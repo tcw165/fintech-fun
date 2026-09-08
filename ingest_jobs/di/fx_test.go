@@ -9,7 +9,7 @@ import (
 
 func TestModuleBuilds(t *testing.T) {
 	app := fx.New(
-		Module(context.Background(), "parse"),
+		Module(context.Background(), "dry-run"),
 		fx.NopLogger,
 	)
 	if err := app.Err(); err != nil {
@@ -17,8 +17,8 @@ func TestModuleBuilds(t *testing.T) {
 	}
 }
 
-func TestBootParseLeavesClientsNil(t *testing.T) {
-	app, err := Boot(context.Background(), "parse")
+func TestBootDryRunLeavesClientsNilWhenOffline(t *testing.T) {
+	app, err := Boot(context.Background(), "dry-run")
 	if err != nil {
 		t.Fatal(err)
 	}

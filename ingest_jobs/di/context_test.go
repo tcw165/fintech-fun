@@ -72,17 +72,10 @@ func TestCommandGating(t *testing.T) {
 		optional bool
 	}{
 		{"", true, false},
-		{"parse", false, false},
-		{"classify", false, false},
-		{"plan", false, false},
-		{"fetch", false, false},
-		{"gold", false, false},
 		{"ingest", true, false},
 		{"refresh", true, false},
 		{"ping", true, false},
 		{"seed", true, false},
-		{"fold", true, false},
-		{"search", true, false},
 		{"verify", false, true},
 		{"dry-run", false, true},
 	}
@@ -97,19 +90,17 @@ func TestCommandGating(t *testing.T) {
 }
 
 func TestNewFromEnvOfflineLeavesClientsNil(t *testing.T) {
-	for _, name := range []string{"parse", "classify", "plan", "fetch", "gold"} {
-		app, err := NewFromEnv(context.Background(), name)
-		if err != nil {
-			t.Fatalf("%s: %v", name, err)
-		}
-		if app.graph_db != nil || app.vector_db != nil {
-			t.Fatalf("%s clients set: %+v", name, app)
-		}
-		if app.embedder == nil {
-			t.Fatalf("%s missing embedder", name)
-		}
-		if app.GraphClient() != nil || app.VectorsClient() != nil {
-			t.Fatalf("%s clients set via accessors", name)
-		}
+	app, err := NewFromEnv(context.Background(), "unknown")
+	if err != nil {
+		t.Fatalf("unknown: %v", err)
+	}
+	if app.graph_db != nil || app.vector_db != nil {
+		t.Fatalf("clients set: %+v", app)
+	}
+	if app.embedder == nil {
+		t.Fatal("missing embedder")
+	}
+	if app.GraphClient() != nil || app.VectorsClient() != nil {
+		t.Fatal("clients set via accessors")
 	}
 }

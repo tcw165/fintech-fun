@@ -1,4 +1,4 @@
-# Job command dispatch. Child of ingest agent + parser/classify; no SKILL.md.
+# Job command dispatch. Child of ingest agent; no SKILL.md.
 load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
@@ -9,14 +9,9 @@ go_library(
     deps = [
         "//agents/skills/ingest/robinhood/corporate_actions",
         "//agents/skills/ingest/robinhood/corporate_actions/agent",
-        "//agents/skills/ingest/robinhood/corporate_actions/classify",
-        "//agents/skills/ingest/robinhood/corporate_actions/fetch",
-        "//agents/skills/ingest/robinhood/corporate_actions/ingest",
-        "//agents/skills/ingest/robinhood/corporate_actions/parser",
         "//graph/clients/neo4j",
         "//graph/clients/qdrant",
         "//graph/embed",
-        "//graph/embed/lexical",
         "//graph/examples",
         "//graph/fold",
         "//ingest_jobs/corporate_actions/request",
@@ -29,8 +24,6 @@ go_test(
     embed = [":tools"],
     deps = [
         "//agents/skills/ingest/robinhood/corporate_actions/agent",
-        "//agents/skills/ingest/robinhood/corporate_actions/classify",
-        "//agents/skills/ingest/robinhood/corporate_actions/parser",
         "//agents/skills/ingest/robinhood/corporate_actions/testdata",
         "//graph/clients/neo4j",
         "//graph/clients/neo4j/impl",
