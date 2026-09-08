@@ -34,10 +34,10 @@ just search "LivePerson stock merger"
 just down            # stop the VM
 ```
 
-Offline ingest tools (fixture file, no live Neo4j/Qdrant):
+Offline ingest dry-run (fixture file, no writes to Neo4j/Qdrant):
 
 ```bash
-bazel run //ingest_jobs/corporate_actions -- parse --file \
+bazel run //ingest_jobs/corporate_actions -- --dry-run --file \
   "$PWD/agents/skills/ingest/robinhood/corporate_actions/testdata/tracker_sept_2026.txt"
 ```
 

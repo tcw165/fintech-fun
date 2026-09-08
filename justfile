@@ -175,6 +175,10 @@ k9s:
 refresh:
     bazel run //ingest_jobs/corporate_actions -- refresh
 
+# Dry-run ingest against a tracker file. Example: just dry-run path/to/tracker.txt
+dry-run file:
+    bazel run //ingest_jobs/corporate_actions -- --dry-run --file {{file}}
+
 # Host → NodePort Bolt/Qdrant. Example: just live ping
 live *args:
     #!/usr/bin/env bash
@@ -196,7 +200,7 @@ seed:
 
 # Ingest a tracker file or fetch live. Example: just ingest --file path/to/tracker.txt
 ingest *args:
-    just live ingest {{args}}
+    just live {{args}}
 
 # Memory gold + live Bolt gold (nflx…ftel) when the cluster is up.
 verify:
