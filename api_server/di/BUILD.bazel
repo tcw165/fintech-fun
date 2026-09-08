@@ -5,6 +5,7 @@ go_library(
     name = "di",
     srcs = [
         "context.go",
+        "fx.go",
         "wire.go",
     ],
     importpath = "github.com/tcw165/fintech-fun/api_server/di",
@@ -18,17 +19,22 @@ go_library(
         "//graph/clients/qdrant/impl",
         "//graph/embed",
         "//graph/embed/lexical",
+        "@org_uber_go_fx//:fx",
     ],
 )
 
 go_test(
     name = "di_test",
-    srcs = ["context_test.go"],
+    srcs = [
+        "context_test.go",
+        "fx_test.go",
+    ],
     embed = [":di"],
     deps = [
         "//api_server/contract",
         "//graph/clients/neo4j/impl",
         "//graph/clients/qdrant/impl",
         "//graph/embed/lexical",
+        "@org_uber_go_fx//:fx",
     ],
 )
