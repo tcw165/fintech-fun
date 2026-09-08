@@ -1,4 +1,4 @@
-package cli
+package main
 
 import (
 	"bytes"
@@ -18,7 +18,7 @@ type exec_result struct {
 func execute_cli(t *testing.T, args ...string) exec_result {
 	t.Helper()
 	var got exec_result
-	cmd := New(func(req request.Request) error {
+	cmd := new_root(func(req request.Request) error {
 		got.called = true
 		got.req = req
 		return nil

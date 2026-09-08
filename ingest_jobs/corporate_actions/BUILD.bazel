@@ -1,5 +1,5 @@
 # Thin job binary. Lifecycle only; di wires the ingest agent, tools dispatch commands.
-load("@rules_go//go:def.bzl", "go_binary", "go_library")
+load("@rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
 
 go_binary(
     name = "corporate_actions",
@@ -9,13 +9,23 @@ go_binary(
 
 go_library(
     name = "corporate_actions_lib",
-    srcs = ["main.go"],
+    srcs = [
+        "main.go",
+        "root.go",
+    ],
     importpath = "github.com/tcw165/fintech-fun/ingest_jobs/corporate_actions",
     visibility = ["//visibility:private"],
     deps = [
-        "//ingest_jobs/corporate_actions/cli",
         "//ingest_jobs/corporate_actions/request",
         "//ingest_jobs/corporate_actions/tools",
         "//ingest_jobs/di",
+        "@com_github_spf13_cobra//:cobra",
     ],
+)
+
+go_test(
+    name = "corporate_actions_test",
+    srcs = ["root_test.go"],
+    embed = [":corporate_actions_lib"],
+    deps = ["//ingest_jobs/corporate_actions/request"],
 )

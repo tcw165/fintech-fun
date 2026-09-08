@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/tcw165/fintech-fun/ingest_jobs/corporate_actions/cli"
 	"github.com/tcw165/fintech-fun/ingest_jobs/corporate_actions/request"
 	"github.com/tcw165/fintech-fun/ingest_jobs/corporate_actions/tools"
 	"github.com/tcw165/fintech-fun/ingest_jobs/di"
@@ -21,7 +20,7 @@ type exit_error struct {
 
 func main() {
 	ctx := context.Background()
-	root := cli.New(func(req request.Request) error {
+	root := new_root(func(req request.Request) error {
 		app, err := di.Boot(
 			ctx,
 			di.ClientName(req.Name, req.DryRun),
