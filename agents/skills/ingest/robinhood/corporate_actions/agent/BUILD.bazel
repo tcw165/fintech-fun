@@ -10,6 +10,7 @@ go_library(
     importpath = "github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/agent",
     visibility = ["//visibility:public"],
     deps = [
+        "//agents/skills/ingest/robinhood/corporate_actions",
         "//agents/skills/ingest/robinhood/corporate_actions/agent/contract",
         "//agents/skills/ingest/robinhood/corporate_actions/classify",
         "//agents/skills/ingest/robinhood/corporate_actions/dedup",
