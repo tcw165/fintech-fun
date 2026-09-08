@@ -9,9 +9,9 @@ import (
 	"github.com/tcw165/fintech-fun/infra/activation/impl"
 )
 
-type stubFold struct{}
+type stub_fold struct{}
 
-func (stubFold) Fold(q string, qty float64) (contract.FoldResponse, error) {
+func (stub_fold) Fold(q string, qty float64) (contract.FoldResponse, error) {
 	row := map[string]any{"company": "Block", "ticker_now": "XYZ", "qty_now": 10.0, "cash_received": 0.0}
 	switch q {
 	case "nflx":
@@ -28,24 +28,24 @@ func (stubFold) Fold(q string, qty float64) (contract.FoldResponse, error) {
 	return contract.FoldResponse{Status: "ok", Q: q, Qty: qty, Rows: []map[string]any{row}}, nil
 }
 
-type stubSearch struct{}
+type stub_search struct{}
 
-func (stubSearch) Search(query string) (contract.SearchResponse, error) {
+func (stub_search) Search(query string) (contract.SearchResponse, error) {
 	return contract.SearchResponse{Status: "ok", Query: query, Hits: []any{"LPSN"}}, nil
 }
 
-type stubGraph struct{}
+type stub_graph struct{}
 
-func (stubGraph) Series(q string) (contract.GraphResponse, error) {
+func (stub_graph) Series(q string) (contract.GraphResponse, error) {
 	return contract.GraphResponse{Status: "ok", Q: q, Rows: []map[string]any{{"company": "Block"}}}, nil
 }
 
-func (stubGraph) Source() (contract.SourceResponse, error) {
+func (stub_graph) Source() (contract.SourceResponse, error) {
 	return contract.SourceResponse{Status: "ok", ID: "robinhood/corporate_actions", PageSHA256: "abc"}, nil
 }
 
 func TestSmokeAgainstStubAPI(t *testing.T) {
-	srv := httptest.NewServer(apiimpl.New(apiimpl.StaticOK{}, stubFold{}, stubSearch{}, stubGraph{}))
+	srv := httptest.NewServer(apiimpl.New(apiimpl.StaticOK{}, stub_fold{}, stub_search{}, stub_graph{}))
 	t.Cleanup(srv.Close)
 	report := impl.HTTP{}.Smoke(srv.URL)
 	if !report.AllOK() {
@@ -61,7 +61,7 @@ func TestHealthFailsWhenDown(t *testing.T) {
 }
 
 func TestGoldAgainstStubAPI(t *testing.T) {
-	srv := httptest.NewServer(apiimpl.New(apiimpl.StaticOK{}, stubFold{}, stubSearch{}, stubGraph{}))
+	srv := httptest.NewServer(apiimpl.New(apiimpl.StaticOK{}, stub_fold{}, stub_search{}, stub_graph{}))
 	t.Cleanup(srv.Close)
 	report := impl.HTTP{}.Gold(srv.URL)
 	if !report.AllOK() || len(report.Steps) != 6 {
