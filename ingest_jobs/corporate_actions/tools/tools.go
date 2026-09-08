@@ -4,6 +4,7 @@ package tools
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	hood_events "github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions"
 	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/agent"
@@ -101,7 +102,8 @@ func run_search(deps Deps, req request.Request) (any, error) {
 	if deps.VectorsClient == nil {
 		return nil, fmt.Errorf("search requires an injected Qdrant client")
 	}
-	if req.Query == "" {
+	query := strings.Join(strings.Fields(req.Query), " ")
+	if query == "" {
 		return nil, fmt.Errorf("search requires a query")
 	}
 	limit := req.Limit
@@ -112,7 +114,7 @@ func run_search(deps Deps, req request.Request) (any, error) {
 	if embedder == nil {
 		embedder = lexical.New()
 	}
-	vecs, err := embedder.Embed([]string{req.Query})
+	vecs, err := embedder.Embed([]string{query})
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +122,7 @@ func run_search(deps Deps, req request.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	return map[string]any{"status": "ok", "query": req.Query, "hits": hits}, nil
+	return map[string]any{"status": "ok", "query": query, "hits": hits}, nil
 }
 
 func run_verify(deps Deps) (any, error) {
@@ -262,10 +264,16 @@ func run_parse(req request.Request) (any, error) {
 }
 
 func run_classify(req request.Request) (any, error) {
-	if req.Date == "" || req.Headline == "" {
+	headline := strings.Join(strings.Fields(req.Headline), " ")
+	if req.Date == "" || headline == "" {
 		return nil, fmt.Errorf("classify requires date and headline")
 	}
-	return classify.ClassifyHeadline(req.Headline, req.Date, req.Company, req.Ticker)
+	return classify.ClassifyHeadline(
+		headline,
+		req.Date,
+		req.Company,
+		req.Ticker,
+	)
 }
 
 func run_fetch(req request.Request) (any, error) {
