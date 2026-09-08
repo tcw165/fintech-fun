@@ -11,7 +11,7 @@ import (
 	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions"
 )
 
-const maxAttempts = 3
+const max_attempts = 3
 
 type Result struct {
 	Status int    `json:"status_code"`
@@ -28,8 +28,8 @@ func FetchTracker(client *http.Client, url string) (Result, error) {
 		client = &http.Client{Timeout: 45 * time.Second}
 	}
 	var last error
-	for attempt := 1; attempt <= maxAttempts; attempt++ {
-		result, err := getOnce(client, url)
+	for attempt := 1; attempt <= max_attempts; attempt++ {
+		result, err := get_once(client, url)
 		if err == nil {
 			return result, nil
 		}
@@ -39,7 +39,7 @@ func FetchTracker(client *http.Client, url string) (Result, error) {
 	return Result{}, last
 }
 
-func getOnce(client *http.Client, url string) (Result, error) {
+func get_once(client *http.Client, url string) (Result, error) {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return Result{}, err
