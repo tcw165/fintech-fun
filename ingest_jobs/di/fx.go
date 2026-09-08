@@ -17,7 +17,7 @@ type boot_request struct {
 	name string
 }
 
-// Module is the ingest-job Fx graph. name is cli_params.Request.Name (empty = ingest).
+// Module is the ingest-job Fx graph. name is cli_params.CliParams.Name (empty = ingest).
 func Module(
 	ctx context.Context,
 	name string,

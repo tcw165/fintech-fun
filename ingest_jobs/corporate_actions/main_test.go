@@ -9,7 +9,7 @@ import (
 )
 
 type exec_result struct {
-	req    cli_params.Request
+	req    cli_params.CliParams
 	called bool
 	out    string
 	err    error
@@ -18,7 +18,7 @@ type exec_result struct {
 func execute_cli(t *testing.T, args ...string) exec_result {
 	t.Helper()
 	var got exec_result
-	cli := cmd(func(req cli_params.Request) error {
+	cli := cmd(func(req cli_params.CliParams) error {
 		got.called = true
 		got.req = req
 		return nil

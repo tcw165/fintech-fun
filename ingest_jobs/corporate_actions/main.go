@@ -20,11 +20,11 @@ type exit_error struct {
 	code int
 }
 
-type run_func func(req cli_params.Request) error
+type run_func func(req cli_params.CliParams) error
 
 func main() {
 	ctx := context.Background()
-	if err := cmd(func(req cli_params.Request) error {
+	if err := cmd(func(req cli_params.CliParams) error {
 		app, err := di.Boot(
 			ctx,
 			di.ClientName(req.Name, req.DryRun),
@@ -74,7 +74,7 @@ func cmd(run run_func) *cobra.Command {
 			if !known_name(name) {
 				return fmt.Errorf("unknown command %q", name)
 			}
-			return run(cli_params.Request{
+			return run(cli_params.CliParams{
 				Name:   name,
 				File:   file,
 				DryRun: dry_run,
