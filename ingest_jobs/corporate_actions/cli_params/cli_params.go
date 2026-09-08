@@ -7,6 +7,3 @@ type CliParams struct {
 	File   string
 	DryRun bool
 }
-
-// Request is the previous name of CliParams.
-type Request = CliParams
