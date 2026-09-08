@@ -42,7 +42,12 @@ func execute_cmd(t *testing.T, checker contract.Checker, args ...string) (string
 
 func TestHealthzOKAndAlias(t *testing.T) {
 	checker := &stub_checker{health: contract.Step{Name: contract.StepHealthz, OK: true}}
-	out, err := execute_cmd(t, checker, "health", "http://127.0.0.1:30080/")
+	out, err := execute_cmd(
+		t,
+		checker,
+		"health",
+		"http://127.0.0.1:30080/",
+	)
 	if err != nil {
 		t.Fatalf("health: %v", err)
 	}
@@ -60,7 +65,12 @@ func TestHealthzOKAndAlias(t *testing.T) {
 
 func TestSmokeFailureExits(t *testing.T) {
 	checker := &stub_checker{smoke: contract.Report{Status: "failed", Steps: []contract.Step{{Name: "fold"}}}}
-	out, err := execute_cmd(t, checker, "smoke", "http://example")
+	out, err := execute_cmd(
+		t,
+		checker,
+		"smoke",
+		"http://example",
+	)
 	if err == nil {
 		t.Fatal("expected smoke failure")
 	}
@@ -74,7 +84,12 @@ func TestProveCombinesSteps(t *testing.T) {
 		smoke: contract.Report{Status: "ok", Steps: []contract.Step{{Name: "fold", OK: true}}},
 		gold:  contract.Report{Status: "ok", Steps: []contract.Step{{Name: "gold:square", OK: true}}},
 	}
-	out, err := execute_cmd(t, checker, "prove", "http://api")
+	out, err := execute_cmd(
+		t,
+		checker,
+		"prove",
+		"http://api",
+	)
 	if err != nil {
 		t.Fatalf("prove: %v", err)
 	}
@@ -95,8 +110,26 @@ func TestMissingURL(t *testing.T) {
 }
 
 func TestUnknownCommand(t *testing.T) {
-	_, err := execute_cmd(t, &stub_checker{}, "nope", "http://api")
+	_, err := execute_cmd(
+		t,
+		&stub_checker{},
+		"nope",
+		"http://api",
+	)
 	if err == nil {
 		t.Fatal("expected unknown command")
+	}
+}
+
+func TestExtraArgsRejected(t *testing.T) {
+	_, err := execute_cmd(
+		t,
+		&stub_checker{},
+		"gold",
+		"http://api",
+		"extra",
+	)
+	if err == nil {
+		t.Fatal("expected extra arg rejection")
 	}
 }
