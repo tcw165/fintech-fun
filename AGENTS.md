@@ -53,5 +53,15 @@ Headline and query strings may contain newlines. Collapse that whitespace the sa
 
 ## PRs
 
-- Stack with Graphite (`gt`), not a single fat PR.
-- First PR sits on `main`. Never land work on `dev/wt*` placeholder branches.
+Always a **linear Graphite stack**. Not optional. Not a single fat PR. Not four PRs all based on `main`.
+
+```
+main ← PR1 ← PR2 ← PR3 ← …
+```
+
+1. `gt sync` on `main` before the first PR.
+2. `gt create -m "[tag] …"` for PR 1. Its parent is `main`.
+3. `gt create` again for each next change. Parent is the previous branch. One commit per branch.
+4. Open and update the stack with `gt submit --stack --publish` only. Do not create PRs with `gh` or any other GitHub tool first — Graphite will not see the parent chain and the dashboard will show a lone PR on `main`.
+5. After submit, share the Graphite URLs (`https://app.graphite.com/github/pr/OWNER/REPO/N`), not only GitHub.
+6. Never land work on `dev/wt*` placeholder branches.
