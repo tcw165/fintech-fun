@@ -1,11 +1,10 @@
-// Package tools dispatches corporate_actions job commands. Child of ingest packages.
+// Package tools runs corporate_actions ingest. Child of ingest packages.
 package tools
 
 import (
 	"fmt"
 	"os"
 
-	hood_events "github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions"
 	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/agent"
 	"github.com/tcw165/fintech-fun/graph/clients/neo4j"
 	"github.com/tcw165/fintech-fun/graph/clients/qdrant"
@@ -22,24 +21,8 @@ type Deps struct {
 	Agent         *agent.Agent
 }
 
-func Run(deps Deps, req cli_params.CliParams) (any, error) {
-	if req.Name == "" {
-		req.Name = "ingest"
-	}
-	switch req.Name {
-	case "ingest":
-		return run_ingest(deps, req)
-	case "verify":
-		return run_verify(deps)
-	case "refresh":
-		return run_refresh(deps)
-	case "ping":
-		return run_ping(deps)
-	case "seed":
-		return run_seed(deps)
-	default:
-		return nil, fmt.Errorf("unknown command %q\n\nsource: %s", req.Name, hood_events.TrackerURL)
-	}
+func Run(deps Deps, params cli_params.CliParams) (any, error) {
+	return run_ingest(deps, params)
 }
 
 func run_ingest(deps Deps, req cli_params.CliParams) (any, error) {
@@ -95,7 +78,7 @@ func run_dry_run(ingest_agent *agent.Agent, req cli_params.CliParams) (any, erro
 	return result.Payload(), nil
 }
 
-func run_refresh(deps Deps) (any, error) {
+func Refresh(deps Deps) (any, error) {
 	if err := require_clients(deps, "refresh"); err != nil {
 		return nil, err
 	}
@@ -106,7 +89,7 @@ func run_refresh(deps Deps) (any, error) {
 	return result.Payload(), nil
 }
 
-func run_verify(deps Deps) (any, error) {
+func Verify(deps Deps) (any, error) {
 	memory := fold.VerifyExamples()
 	ok := 0
 	for _, check := range memory {
@@ -151,7 +134,7 @@ func run_verify(deps Deps) (any, error) {
 	return out, nil
 }
 
-func run_ping(deps Deps) (any, error) {
+func Ping(deps Deps) (any, error) {
 	if err := require_clients(deps, "ping"); err != nil {
 		return nil, err
 	}
@@ -184,7 +167,7 @@ func run_ping(deps Deps) (any, error) {
 	}, nil
 }
 
-func run_seed(deps Deps) (any, error) {
+func Seed(deps Deps) (any, error) {
 	if err := require_clients(deps, "seed"); err != nil {
 		return nil, err
 	}
