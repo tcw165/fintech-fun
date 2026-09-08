@@ -50,6 +50,7 @@ func TestFoldSquare(t *testing.T) {
 
 func TestFoldLPSN(t *testing.T) {
 	c, s, e := examples.LPSN()
+	e[0].Headline = "LivePerson (LPSN) performed a stock merger.\nShareholders will receive 0.4673 new shares of SOUN."
 	result := Fold(c, s, e, 100)
 	if result.TickerNow != "LPSN" || result.Series[0].NowHolds != "SOUN" {
 		t.Fatalf("%+v", result)

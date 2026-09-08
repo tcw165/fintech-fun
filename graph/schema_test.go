@@ -41,6 +41,20 @@ func TestEventIDIsTickerDateKind(t *testing.T) {
 	}
 }
 
+func TestEventIDIgnoresMultilineHeadline(t *testing.T) {
+	event := Event{
+		Date: Date(2026, 9, 4),
+		Kind: KindNowDifferentStock,
+		Headline: "LivePerson (LPSN) performed a stock merger.\n" +
+			"Shareholders will receive 0.4673 new shares of SOUN.",
+		HappenedTo:      "LPSN",
+		ShareMultiplier: 0.4673,
+	}
+	if event.ID() != "LPSN|2026-09-04|now_different_stock" {
+		t.Fatalf("got %q", event.ID())
+	}
+}
+
 func TestOnlyReverseSplitDivides(t *testing.T) {
 	for _, kind := range AllEventKinds() {
 		if kind == KindReverseSplit {

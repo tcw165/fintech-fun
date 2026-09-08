@@ -44,3 +44,16 @@ func TestLivePersonQueryRanksLPSN(t *testing.T) {
 		t.Fatalf("lpsn=%v nflx=%v", cosine(vecs[0], vecs[1]), cosine(vecs[0], vecs[2]))
 	}
 }
+
+func TestEmbedCollapsesMultilineQuery(t *testing.T) {
+	vecs, err := New().Embed([]string{
+		"LivePerson stock merger",
+		"LivePerson\nstock\nmerger",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cosine(vecs[0], vecs[1]) < 0.999 {
+		t.Fatalf("newline query should match spaced query: %v", cosine(vecs[0], vecs[1]))
+	}
+}
