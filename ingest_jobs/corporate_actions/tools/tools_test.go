@@ -6,8 +6,6 @@ import (
 	"testing"
 
 	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/agent"
-	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/classify"
-	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/parser"
 	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/testdata"
 	"github.com/tcw165/fintech-fun/graph/clients/neo4j"
 	neo4jimpl "github.com/tcw165/fintech-fun/graph/clients/neo4j/impl"
@@ -134,84 +132,10 @@ func contains_write(cypher string) bool {
 	return false
 }
 
-func TestFoldIssuesAccountQuery(t *testing.T) {
-	graph_db := &neo4jimpl.Recording{}
-	payload, err := Run(test_deps(graph_db, &qdrantimpl.Recording{}), request.Request{Name: "fold", Q: "square", Qty: 10})
-	if err != nil {
-		t.Fatal(err)
-	}
-	out := payload.(map[string]any)
-	if out["q"] != "square" || out["qty"] != 10.0 {
-		t.Fatalf("%v", out)
-	}
-	if len(graph_db.Calls) != 1 || graph_db.Calls[0].Params["q"] != "square" {
-		t.Fatalf("%+v", graph_db.Calls)
-	}
-}
-
 func TestRefreshRequiresClients(t *testing.T) {
 	_, err := Run(Deps{}, request.Request{Name: "refresh"})
 	if err == nil {
 		t.Fatal("expected error")
-	}
-}
-
-func TestSearchUsesInjectedQdrant(t *testing.T) {
-	vector_db := &qdrantimpl.Recording{}
-	payload, err := Run(
-		Deps{VectorsClient: vector_db, Embedder: lexical.New()},
-		request.Request{
-			Name:  "search",
-			Query: "LivePerson stock merger",
-		},
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-	out := payload.(map[string]any)
-	if out["query"] != "LivePerson stock merger" {
-		t.Fatalf("%v", out)
-	}
-}
-
-func TestSearchCollapsesMultilineQuery(t *testing.T) {
-	vector_db := &qdrantimpl.Recording{}
-	payload, err := Run(
-		Deps{VectorsClient: vector_db, Embedder: lexical.New()},
-		request.Request{
-			Name:  "search",
-			Query: "LivePerson\nstock\nmerger",
-		},
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-	out := payload.(map[string]any)
-	if out["query"] != "LivePerson stock merger" {
-		t.Fatalf("%v", out)
-	}
-}
-
-func TestClassifyMultilineHeadline(t *testing.T) {
-	payload, err := Run(
-		Deps{},
-		request.Request{
-			Name:     "classify",
-			Date:     "2026-09-04",
-			Headline: "LivePerson (LPSN) performed a stock merger.\nShareholders will receive 0.4673 new shares of SOUN for each old share of LPSN previously held.",
-			Company:  "LivePerson",
-			Ticker:   "LPSN",
-		},
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-	result := payload.(classify.ClassifyResult)
-	if result.Status != "success" || len(result.Events) != 1 {
-		t.Fatalf("%+v", result)
-	}
-	if result.Events[0].Kind != "now_different_stock" || result.Events[0].ShareMultiplier != 0.4673 || result.Events[0].YouNowHold != "SOUN" {
-		t.Fatalf("%+v", result.Events[0])
 	}
 }
 
@@ -284,18 +208,6 @@ func TestPingRequiresClients(t *testing.T) {
 	_, err := Run(Deps{}, request.Request{Name: "ping"})
 	if err == nil {
 		t.Fatal("expected error")
-	}
-}
-
-func TestParseFixture(t *testing.T) {
-	path := write_temp(t, testdata.TrackerSept2026)
-	payload, err := Run(Deps{}, request.Request{Name: "parse", File: path})
-	if err != nil {
-		t.Fatal(err)
-	}
-	page := payload.(parser.ParseResult)
-	if page.Count < 12 {
-		t.Fatalf("%+v", page)
 	}
 }
 

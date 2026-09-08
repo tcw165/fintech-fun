@@ -1,21 +1,15 @@
-// Package tools dispatches corporate_actions CLI commands. Child of ingest packages.
+// Package tools dispatches corporate_actions job commands. Child of ingest packages.
 package tools
 
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	hood_events "github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions"
 	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/agent"
-	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/classify"
-	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/fetch"
-	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/ingest"
-	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/parser"
 	"github.com/tcw165/fintech-fun/graph/clients/neo4j"
 	"github.com/tcw165/fintech-fun/graph/clients/qdrant"
 	"github.com/tcw165/fintech-fun/graph/embed"
-	"github.com/tcw165/fintech-fun/graph/embed/lexical"
 	"github.com/tcw165/fintech-fun/graph/examples"
 	"github.com/tcw165/fintech-fun/graph/fold"
 	"github.com/tcw165/fintech-fun/ingest_jobs/corporate_actions/request"
@@ -33,30 +27,16 @@ func Run(deps Deps, req request.Request) (any, error) {
 		req.Name = "ingest"
 	}
 	switch req.Name {
-	case "parse":
-		return run_parse(req)
-	case "classify":
-		return run_classify(req)
-	case "plan":
-		return run_plan(req)
-	case "fetch":
-		return run_fetch(req)
-	case "gold":
-		return run_gold(req)
 	case "ingest":
 		return run_ingest(deps, req)
 	case "verify":
 		return run_verify(deps)
-	case "search":
-		return run_search(deps, req)
 	case "refresh":
 		return run_refresh(deps)
 	case "ping":
 		return run_ping(deps)
 	case "seed":
 		return run_seed(deps)
-	case "fold":
-		return run_fold(deps, req)
 	default:
 		return nil, fmt.Errorf("unknown command %q\n\nsource: %s", req.Name, hood_events.TrackerURL)
 	}
@@ -124,33 +104,6 @@ func run_refresh(deps Deps) (any, error) {
 		return nil, err
 	}
 	return result.Payload(), nil
-}
-
-func run_search(deps Deps, req request.Request) (any, error) {
-	if deps.VectorsClient == nil {
-		return nil, fmt.Errorf("search requires an injected Qdrant client")
-	}
-	query := strings.Join(strings.Fields(req.Query), " ")
-	if query == "" {
-		return nil, fmt.Errorf("search requires a query")
-	}
-	limit := req.Limit
-	if limit <= 0 {
-		limit = 5
-	}
-	embedder := deps.Embedder
-	if embedder == nil {
-		embedder = lexical.New()
-	}
-	vecs, err := embedder.Embed([]string{query})
-	if err != nil {
-		return nil, err
-	}
-	hits, err := qdrant.SearchHeadlines(deps.VectorsClient, vecs[0], limit)
-	if err != nil {
-		return nil, err
-	}
-	return map[string]any{"status": "ok", "query": query, "hits": hits}, nil
 }
 
 func run_verify(deps Deps) (any, error) {
@@ -269,103 +222,9 @@ func run_seed(deps Deps) (any, error) {
 	}, nil
 }
 
-func run_fold(deps Deps, req request.Request) (any, error) {
-	if err := require_clients(deps, "fold"); err != nil {
-		return nil, err
-	}
-	if req.Q == "" {
-		return nil, fmt.Errorf("fold requires --q and --qty")
-	}
-	rows, err := neo4j.Fold(deps.GraphClient, req.Q, req.Qty)
-	if err != nil {
-		return nil, err
-	}
-	return map[string]any{"status": "ok", "q": req.Q, "qty": req.Qty, "rows": rows}, nil
-}
-
-func run_parse(req request.Request) (any, error) {
-	text, err := read_file(req.File)
-	if err != nil {
-		return nil, err
-	}
-	return parser.ParseTrackerPage(text), nil
-}
-
-func run_classify(req request.Request) (any, error) {
-	headline := strings.Join(strings.Fields(req.Headline), " ")
-	if req.Date == "" || headline == "" {
-		return nil, fmt.Errorf("classify requires date and headline")
-	}
-	return classify.ClassifyHeadline(
-		headline,
-		req.Date,
-		req.Company,
-		req.Ticker,
-	)
-}
-
-func run_fetch(req request.Request) (any, error) {
-	result, err := fetch.FetchTracker(nil, "")
-	if err != nil {
-		return nil, err
-	}
-	out := map[string]any{
-		"status":      "ok",
-		"url":         result.URL,
-		"bytes":       result.Bytes,
-		"status_code": result.Status,
-	}
-	if req.Out != "" {
-		if err := os.WriteFile(req.Out, []byte(result.Text), 0o644); err != nil {
-			return nil, err
-		}
-		out["path"] = req.Out
-		return out, nil
-	}
-	out["text"] = result.Text
-	return out, nil
-}
-
-func run_gold(req request.Request) (any, error) {
-	var text string
-	if req.File != "" {
-		data, err := os.ReadFile(req.File)
-		if err != nil {
-			return nil, err
-		}
-		text = string(data)
-	} else {
-		page, err := fetch.FetchTracker(nil, "")
-		if err != nil {
-			return nil, err
-		}
-		text = page.Text
-	}
-	return classify.Report(parser.ParseTracker(text)), nil
-}
-
-func run_plan(req request.Request) (any, error) {
-	text, err := read_file(req.File)
-	if err != nil {
-		return nil, err
-	}
-	return ingest.PlanIngest(text), nil
-}
-
 func require_clients(deps Deps, cmd string) error {
 	if deps.GraphClient == nil || deps.VectorsClient == nil || deps.Agent == nil {
 		return fmt.Errorf("%s requires injected Neo4j, Qdrant, and ingest agent", cmd)
 	}
 	return nil
-}
-
-func read_file(path string) (string, error) {
-	if path == "" {
-		return "", fmt.Errorf("missing file argument")
-	}
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return "", err
-	}
-	return string(data), nil
 }
