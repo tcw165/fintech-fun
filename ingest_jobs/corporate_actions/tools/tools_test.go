@@ -27,7 +27,7 @@ func test_deps(graph_db neo4j.Client, vector_db qdrant.Client) Deps {
 func TestPingUsesInjectedClients(t *testing.T) {
 	graph_db := &neo4jimpl.Recording{}
 	vector_db := &qdrantimpl.Recording{}
-	payload, err := Run(test_deps(graph_db, vector_db), cli_params.CliParams{Name: "ping"})
+	payload, err := Ping(test_deps(graph_db, vector_db))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,7 +43,7 @@ func TestPingUsesInjectedClients(t *testing.T) {
 func TestSeedWritesSixFixtures(t *testing.T) {
 	graph_db := &neo4jimpl.Recording{}
 	vector_db := &qdrantimpl.Recording{}
-	payload, err := Run(test_deps(graph_db, vector_db), cli_params.CliParams{Name: "seed"})
+	payload, err := Seed(test_deps(graph_db, vector_db))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -57,7 +57,10 @@ func TestSeedWritesSixFixtures(t *testing.T) {
 }
 
 func TestIngestMissingFile(t *testing.T) {
-	_, err := Run(test_deps(&neo4jimpl.Recording{}, &qdrantimpl.Recording{}), cli_params.CliParams{Name: "ingest", File: "missing-file-for-error"})
+	_, err := Run(
+		test_deps(&neo4jimpl.Recording{}, &qdrantimpl.Recording{}),
+		cli_params.CliParams{File: "missing-file-for-error"},
+	)
 	if err == nil {
 		t.Fatal("expected missing file")
 	}
@@ -65,7 +68,10 @@ func TestIngestMissingFile(t *testing.T) {
 
 func TestIngestFileUsesAgentPrefixDedup(t *testing.T) {
 	path := write_temp(t, testdata.TrackerSept2026)
-	payload, err := Run(test_deps(&neo4jimpl.Recording{}, &qdrantimpl.Recording{}), cli_params.CliParams{Name: "ingest", File: path})
+	payload, err := Run(
+		test_deps(&neo4jimpl.Recording{}, &qdrantimpl.Recording{}),
+		cli_params.CliParams{File: path},
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -84,7 +90,10 @@ func TestIngestFileUsesAgentPrefixDedup(t *testing.T) {
 
 func TestIngestDryRunPlansWithoutClients(t *testing.T) {
 	path := write_temp(t, testdata.TrackerSept2026)
-	payload, err := Run(Deps{}, cli_params.CliParams{Name: "ingest", File: path, DryRun: true})
+	payload, err := Run(
+		Deps{},
+		cli_params.CliParams{File: path, DryRun: true},
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -104,7 +113,7 @@ func TestIngestDryRunDoesNotWrite(t *testing.T) {
 	vector_db := &qdrantimpl.Recording{}
 	payload, err := Run(
 		test_deps(graph_db, vector_db),
-		cli_params.CliParams{Name: "ingest", File: path, DryRun: true},
+		cli_params.CliParams{File: path, DryRun: true},
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -133,14 +142,14 @@ func contains_write(cypher string) bool {
 }
 
 func TestRefreshRequiresClients(t *testing.T) {
-	_, err := Run(Deps{}, cli_params.CliParams{Name: "refresh"})
+	_, err := Refresh(Deps{})
 	if err == nil {
 		t.Fatal("expected error")
 	}
 }
 
 func TestVerifyMatchesNotionTables(t *testing.T) {
-	payload, err := Run(Deps{}, cli_params.CliParams{Name: "verify"})
+	payload, err := Verify(Deps{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -152,7 +161,7 @@ func TestVerifyMatchesNotionTables(t *testing.T) {
 
 func TestVerifyIncludesBoltWhenGraphSet(t *testing.T) {
 	graph_db := &neo4jimpl.Recording{}
-	payload, err := Run(Deps{GraphClient: graph_db}, cli_params.CliParams{Name: "verify"})
+	payload, err := Verify(Deps{GraphClient: graph_db})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -185,7 +194,7 @@ func TestVerifyBoltGoldMatchesFoldRows(t *testing.T) {
 		}
 		return nil, nil
 	})
-	payload, err := Run(Deps{GraphClient: graph_db}, cli_params.CliParams{Name: "verify"})
+	payload, err := Verify(Deps{GraphClient: graph_db})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -198,23 +207,16 @@ func TestVerifyBoltGoldFailsOnMismatch(t *testing.T) {
 	graph_db := neo4jimpl.Func(func(string, map[string]any) ([]map[string]any, error) {
 		return []map[string]any{{"company": "Wrong", "ticker_now": "NOPE", "qty_now": 1.0}}, nil
 	})
-	_, err := Run(Deps{GraphClient: graph_db}, cli_params.CliParams{Name: "verify"})
+	_, err := Verify(Deps{GraphClient: graph_db})
 	if err == nil {
 		t.Fatal("expected bolt gold failure")
 	}
 }
 
 func TestPingRequiresClients(t *testing.T) {
-	_, err := Run(Deps{}, cli_params.CliParams{Name: "ping"})
+	_, err := Ping(Deps{})
 	if err == nil {
 		t.Fatal("expected error")
-	}
-}
-
-func TestUnknownCommand(t *testing.T) {
-	_, err := Run(Deps{}, cli_params.CliParams{Name: "nope"})
-	if err == nil {
-		t.Fatal("expected unknown command")
 	}
 }
 
