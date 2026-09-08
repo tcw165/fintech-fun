@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/agent"
+	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/ingest"
 	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/parser"
 	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/testdata"
 	"github.com/tcw165/fintech-fun/graph/clients/neo4j"
@@ -12,6 +13,7 @@ import (
 	"github.com/tcw165/fintech-fun/graph/clients/qdrant"
 	qdrantimpl "github.com/tcw165/fintech-fun/graph/clients/qdrant/impl"
 	"github.com/tcw165/fintech-fun/graph/embed/lexical"
+	"github.com/tcw165/fintech-fun/ingest_jobs/corporate_actions/request"
 )
 
 func test_deps(graph_db neo4j.Client, vector_db qdrant.Client) Deps {
@@ -26,7 +28,7 @@ func test_deps(graph_db neo4j.Client, vector_db qdrant.Client) Deps {
 func TestPingUsesInjectedClients(t *testing.T) {
 	graph_db := &neo4jimpl.Recording{}
 	vector_db := &qdrantimpl.Recording{}
-	payload, err := Run(test_deps(graph_db, vector_db), []string{"ping"})
+	payload, err := Run(test_deps(graph_db, vector_db), request.Request{Name: "ping"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -42,7 +44,7 @@ func TestPingUsesInjectedClients(t *testing.T) {
 func TestSeedWritesSixFixtures(t *testing.T) {
 	graph_db := &neo4jimpl.Recording{}
 	vector_db := &qdrantimpl.Recording{}
-	payload, err := Run(test_deps(graph_db, vector_db), []string{"seed"})
+	payload, err := Run(test_deps(graph_db, vector_db), request.Request{Name: "seed"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -56,7 +58,7 @@ func TestSeedWritesSixFixtures(t *testing.T) {
 }
 
 func TestIngestMissingFile(t *testing.T) {
-	_, err := Run(test_deps(&neo4jimpl.Recording{}, &qdrantimpl.Recording{}), []string{"ingest", "missing-file-for-error"})
+	_, err := Run(test_deps(&neo4jimpl.Recording{}, &qdrantimpl.Recording{}), request.Request{Name: "ingest", File: "missing-file-for-error"})
 	if err == nil {
 		t.Fatal("expected missing file")
 	}
@@ -64,7 +66,7 @@ func TestIngestMissingFile(t *testing.T) {
 
 func TestIngestFileUsesAgentPrefixDedup(t *testing.T) {
 	path := write_temp(t, testdata.TrackerSept2026)
-	payload, err := Run(test_deps(&neo4jimpl.Recording{}, &qdrantimpl.Recording{}), []string{"ingest", path})
+	payload, err := Run(test_deps(&neo4jimpl.Recording{}, &qdrantimpl.Recording{}), request.Request{Name: "ingest", File: path})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -81,9 +83,21 @@ func TestIngestFileUsesAgentPrefixDedup(t *testing.T) {
 	}
 }
 
+func TestIngestDryRunPlansWithoutClients(t *testing.T) {
+	path := write_temp(t, testdata.TrackerSept2026)
+	payload, err := Run(Deps{}, request.Request{Name: "ingest", File: path, DryRun: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	plan := payload.(ingest.PlanResult)
+	if !plan.DryRun || plan.Written < 12 {
+		t.Fatalf("%+v", plan)
+	}
+}
+
 func TestFoldIssuesAccountQuery(t *testing.T) {
 	graph_db := &neo4jimpl.Recording{}
-	payload, err := Run(test_deps(graph_db, &qdrantimpl.Recording{}), []string{"fold", "square", "10"})
+	payload, err := Run(test_deps(graph_db, &qdrantimpl.Recording{}), request.Request{Name: "fold", Q: "square", Qty: 10})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -97,7 +111,7 @@ func TestFoldIssuesAccountQuery(t *testing.T) {
 }
 
 func TestRefreshRequiresClients(t *testing.T) {
-	_, err := Run(Deps{}, []string{"refresh"})
+	_, err := Run(Deps{}, request.Request{Name: "refresh"})
 	if err == nil {
 		t.Fatal("expected error")
 	}
@@ -105,7 +119,7 @@ func TestRefreshRequiresClients(t *testing.T) {
 
 func TestSearchUsesInjectedQdrant(t *testing.T) {
 	vector_db := &qdrantimpl.Recording{}
-	payload, err := Run(Deps{VectorsClient: vector_db, Embedder: lexical.New()}, []string{"search", "LivePerson", "stock", "merger"})
+	payload, err := Run(Deps{VectorsClient: vector_db, Embedder: lexical.New()}, request.Request{Name: "search", Query: "LivePerson stock merger"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -116,7 +130,7 @@ func TestSearchUsesInjectedQdrant(t *testing.T) {
 }
 
 func TestVerifyMatchesNotionTables(t *testing.T) {
-	payload, err := Run(Deps{}, []string{"verify"})
+	payload, err := Run(Deps{}, request.Request{Name: "verify"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -128,7 +142,7 @@ func TestVerifyMatchesNotionTables(t *testing.T) {
 
 func TestVerifyIncludesBoltWhenGraphSet(t *testing.T) {
 	graph_db := &neo4jimpl.Recording{}
-	payload, err := Run(Deps{GraphClient: graph_db}, []string{"verify"})
+	payload, err := Run(Deps{GraphClient: graph_db}, request.Request{Name: "verify"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -161,7 +175,7 @@ func TestVerifyBoltGoldMatchesFoldRows(t *testing.T) {
 		}
 		return nil, nil
 	})
-	payload, err := Run(Deps{GraphClient: graph_db}, []string{"verify"})
+	payload, err := Run(Deps{GraphClient: graph_db}, request.Request{Name: "verify"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -174,14 +188,14 @@ func TestVerifyBoltGoldFailsOnMismatch(t *testing.T) {
 	graph_db := neo4jimpl.Func(func(string, map[string]any) ([]map[string]any, error) {
 		return []map[string]any{{"company": "Wrong", "ticker_now": "NOPE", "qty_now": 1.0}}, nil
 	})
-	_, err := Run(Deps{GraphClient: graph_db}, []string{"verify"})
+	_, err := Run(Deps{GraphClient: graph_db}, request.Request{Name: "verify"})
 	if err == nil {
 		t.Fatal("expected bolt gold failure")
 	}
 }
 
 func TestPingRequiresClients(t *testing.T) {
-	_, err := Run(Deps{}, []string{"ping"})
+	_, err := Run(Deps{}, request.Request{Name: "ping"})
 	if err == nil {
 		t.Fatal("expected error")
 	}
@@ -189,7 +203,7 @@ func TestPingRequiresClients(t *testing.T) {
 
 func TestParseFixture(t *testing.T) {
 	path := write_temp(t, testdata.TrackerSept2026)
-	payload, err := Run(Deps{}, []string{"parse", path})
+	payload, err := Run(Deps{}, request.Request{Name: "parse", File: path})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -200,7 +214,7 @@ func TestParseFixture(t *testing.T) {
 }
 
 func TestUnknownCommand(t *testing.T) {
-	_, err := Run(Deps{}, []string{"nope"})
+	_, err := Run(Deps{}, request.Request{Name: "nope"})
 	if err == nil {
 		t.Fatal("expected unknown command")
 	}

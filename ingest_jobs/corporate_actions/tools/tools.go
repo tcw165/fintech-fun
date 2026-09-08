@@ -4,8 +4,6 @@ package tools
 import (
 	"fmt"
 	"os"
-	"strconv"
-	"strings"
 
 	hood_events "github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions"
 	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/agent"
@@ -19,6 +17,7 @@ import (
 	"github.com/tcw165/fintech-fun/graph/embed/lexical"
 	"github.com/tcw165/fintech-fun/graph/examples"
 	"github.com/tcw165/fintech-fun/graph/fold"
+	"github.com/tcw165/fintech-fun/ingest_jobs/corporate_actions/request"
 )
 
 type Deps struct {
@@ -28,27 +27,27 @@ type Deps struct {
 	Agent         *agent.Agent
 }
 
-func Run(deps Deps, args []string) (any, error) {
-	if len(args) == 0 {
-		args = []string{"ingest"}
+func Run(deps Deps, req request.Request) (any, error) {
+	if req.Name == "" {
+		req.Name = "ingest"
 	}
-	switch args[0] {
+	switch req.Name {
 	case "parse":
-		return run_parse(args)
+		return run_parse(req)
 	case "classify":
-		return run_classify(args)
+		return run_classify(req)
 	case "plan":
-		return run_plan(args)
+		return run_plan(req)
 	case "fetch":
-		return run_fetch(args)
+		return run_fetch(req)
 	case "gold":
-		return run_gold(args)
+		return run_gold(req)
 	case "ingest":
-		return run_ingest(deps, args)
+		return run_ingest(deps, req)
 	case "verify":
 		return run_verify(deps)
 	case "search":
-		return run_search(deps, args)
+		return run_search(deps, req)
 	case "refresh":
 		return run_refresh(deps)
 	case "ping":
@@ -56,18 +55,21 @@ func Run(deps Deps, args []string) (any, error) {
 	case "seed":
 		return run_seed(deps)
 	case "fold":
-		return run_fold(deps, args)
+		return run_fold(deps, req)
 	default:
-		return nil, fmt.Errorf("unknown command %q\n\nsource: %s", args[0], hood_events.TrackerURL)
+		return nil, fmt.Errorf("unknown command %q\n\nsource: %s", req.Name, hood_events.TrackerURL)
 	}
 }
 
-func run_ingest(deps Deps, args []string) (any, error) {
+func run_ingest(deps Deps, req request.Request) (any, error) {
+	if req.DryRun {
+		return run_plan(req)
+	}
 	if err := require_clients(deps, "ingest"); err != nil {
 		return nil, err
 	}
-	if len(args) > 1 {
-		data, err := os.ReadFile(args[1])
+	if req.File != "" {
+		data, err := os.ReadFile(req.File)
 		if err != nil {
 			return nil, err
 		}
@@ -95,27 +97,30 @@ func run_refresh(deps Deps) (any, error) {
 	return result.Payload(), nil
 }
 
-func run_search(deps Deps, args []string) (any, error) {
+func run_search(deps Deps, req request.Request) (any, error) {
 	if deps.VectorsClient == nil {
 		return nil, fmt.Errorf("search requires an injected Qdrant client")
 	}
-	if len(args) < 2 {
+	if req.Query == "" {
 		return nil, fmt.Errorf("search requires a query")
 	}
-	query := strings.Join(args[1:], " ")
+	limit := req.Limit
+	if limit <= 0 {
+		limit = 5
+	}
 	embedder := deps.Embedder
 	if embedder == nil {
 		embedder = lexical.New()
 	}
-	vecs, err := embedder.Embed([]string{query})
+	vecs, err := embedder.Embed([]string{req.Query})
 	if err != nil {
 		return nil, err
 	}
-	hits, err := qdrant.SearchHeadlines(deps.VectorsClient, vecs[0], 5)
+	hits, err := qdrant.SearchHeadlines(deps.VectorsClient, vecs[0], limit)
 	if err != nil {
 		return nil, err
 	}
-	return map[string]any{"status": "ok", "query": query, "hits": hits}, nil
+	return map[string]any{"status": "ok", "query": req.Query, "hits": hits}, nil
 }
 
 func run_verify(deps Deps) (any, error) {
@@ -234,47 +239,36 @@ func run_seed(deps Deps) (any, error) {
 	}, nil
 }
 
-func run_fold(deps Deps, args []string) (any, error) {
+func run_fold(deps Deps, req request.Request) (any, error) {
 	if err := require_clients(deps, "fold"); err != nil {
 		return nil, err
 	}
-	if len(args) < 3 {
-		return nil, fmt.Errorf("fold requires <q> and <qty>")
+	if req.Q == "" {
+		return nil, fmt.Errorf("fold requires --q and --qty")
 	}
-	qty, err := strconv.ParseFloat(args[2], 64)
+	rows, err := neo4j.Fold(deps.GraphClient, req.Q, req.Qty)
 	if err != nil {
 		return nil, err
 	}
-	rows, err := neo4j.Fold(deps.GraphClient, args[1], qty)
-	if err != nil {
-		return nil, err
-	}
-	return map[string]any{"status": "ok", "q": args[1], "qty": qty, "rows": rows}, nil
+	return map[string]any{"status": "ok", "q": req.Q, "qty": req.Qty, "rows": rows}, nil
 }
 
-func run_parse(args []string) (any, error) {
-	text, err := read_arg(args, 1)
+func run_parse(req request.Request) (any, error) {
+	text, err := read_file(req.File)
 	if err != nil {
 		return nil, err
 	}
 	return parser.ParseTrackerPage(text), nil
 }
 
-func run_classify(args []string) (any, error) {
-	if len(args) < 3 {
+func run_classify(req request.Request) (any, error) {
+	if req.Date == "" || req.Headline == "" {
 		return nil, fmt.Errorf("classify requires date and headline")
 	}
-	company, ticker := "", ""
-	if len(args) > 3 {
-		company = args[3]
-	}
-	if len(args) > 4 {
-		ticker = args[4]
-	}
-	return classify.ClassifyHeadline(args[2], args[1], company, ticker)
+	return classify.ClassifyHeadline(req.Headline, req.Date, req.Company, req.Ticker)
 }
 
-func run_fetch(args []string) (any, error) {
+func run_fetch(req request.Request) (any, error) {
 	result, err := fetch.FetchTracker(nil, "")
 	if err != nil {
 		return nil, err
@@ -285,21 +279,21 @@ func run_fetch(args []string) (any, error) {
 		"bytes":       result.Bytes,
 		"status_code": result.Status,
 	}
-	if len(args) > 1 {
-		if err := os.WriteFile(args[1], []byte(result.Text), 0o644); err != nil {
+	if req.Out != "" {
+		if err := os.WriteFile(req.Out, []byte(result.Text), 0o644); err != nil {
 			return nil, err
 		}
-		out["path"] = args[1]
+		out["path"] = req.Out
 		return out, nil
 	}
 	out["text"] = result.Text
 	return out, nil
 }
 
-func run_gold(args []string) (any, error) {
+func run_gold(req request.Request) (any, error) {
 	var text string
-	if len(args) > 1 {
-		data, err := os.ReadFile(args[1])
+	if req.File != "" {
+		data, err := os.ReadFile(req.File)
 		if err != nil {
 			return nil, err
 		}
@@ -314,8 +308,8 @@ func run_gold(args []string) (any, error) {
 	return classify.Report(parser.ParseTracker(text)), nil
 }
 
-func run_plan(args []string) (any, error) {
-	text, err := read_arg(args, 1)
+func run_plan(req request.Request) (any, error) {
+	text, err := read_file(req.File)
 	if err != nil {
 		return nil, err
 	}
@@ -329,11 +323,11 @@ func require_clients(deps Deps, cmd string) error {
 	return nil
 }
 
-func read_arg(args []string, i int) (string, error) {
-	if len(args) <= i {
+func read_file(path string) (string, error) {
+	if path == "" {
 		return "", fmt.Errorf("missing file argument")
 	}
-	data, err := os.ReadFile(args[i])
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return "", err
 	}

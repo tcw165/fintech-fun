@@ -14,6 +14,7 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//ingest_jobs/corporate_actions/cli",
+        "//ingest_jobs/corporate_actions/request",
         "//ingest_jobs/corporate_actions/tools",
         "//ingest_jobs/di",
     ],

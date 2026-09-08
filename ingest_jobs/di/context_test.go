@@ -67,49 +67,48 @@ func TestNilContextAccessors(t *testing.T) {
 
 func TestCommandGating(t *testing.T) {
 	cases := []struct {
-		args     []string
+		name     string
 		live     bool
 		optional bool
 	}{
-		{nil, true, false},
-		{[]string{}, true, false},
-		{[]string{"parse"}, false, false},
-		{[]string{"classify"}, false, false},
-		{[]string{"plan"}, false, false},
-		{[]string{"fetch"}, false, false},
-		{[]string{"gold"}, false, false},
-		{[]string{"ingest"}, true, false},
-		{[]string{"refresh"}, true, false},
-		{[]string{"ping"}, true, false},
-		{[]string{"seed"}, true, false},
-		{[]string{"fold"}, true, false},
-		{[]string{"search"}, true, false},
-		{[]string{"verify"}, false, true},
+		{"", true, false},
+		{"parse", false, false},
+		{"classify", false, false},
+		{"plan", false, false},
+		{"fetch", false, false},
+		{"gold", false, false},
+		{"ingest", true, false},
+		{"refresh", true, false},
+		{"ping", true, false},
+		{"seed", true, false},
+		{"fold", true, false},
+		{"search", true, false},
+		{"verify", false, true},
 	}
 	for _, tc := range cases {
-		if got := needs_live_clients(tc.args); got != tc.live {
-			t.Fatalf("needs_live_clients(%v) = %v, want %v", tc.args, got, tc.live)
+		if got := needs_live_clients(tc.name); got != tc.live {
+			t.Fatalf("needs_live_clients(%q) = %v, want %v", tc.name, got, tc.live)
 		}
-		if got := wants_optional_clients(tc.args); got != tc.optional {
-			t.Fatalf("wants_optional_clients(%v) = %v, want %v", tc.args, got, tc.optional)
+		if got := wants_optional_clients(tc.name); got != tc.optional {
+			t.Fatalf("wants_optional_clients(%q) = %v, want %v", tc.name, got, tc.optional)
 		}
 	}
 }
 
 func TestNewFromEnvOfflineLeavesClientsNil(t *testing.T) {
-	for _, args := range [][]string{{"parse"}, {"classify"}, {"plan"}, {"fetch"}, {"gold"}} {
-		app, err := NewFromEnv(context.Background(), args)
+	for _, name := range []string{"parse", "classify", "plan", "fetch", "gold"} {
+		app, err := NewFromEnv(context.Background(), name)
 		if err != nil {
-			t.Fatalf("%v: %v", args, err)
+			t.Fatalf("%s: %v", name, err)
 		}
 		if app.graph_db != nil || app.vector_db != nil {
-			t.Fatalf("%v clients set: %+v", args, app)
+			t.Fatalf("%s clients set: %+v", name, app)
 		}
 		if app.embedder == nil {
-			t.Fatalf("%v missing embedder", args)
+			t.Fatalf("%s missing embedder", name)
 		}
 		if app.GraphClient() != nil || app.VectorsClient() != nil {
-			t.Fatalf("%v clients set via accessors", args)
+			t.Fatalf("%s clients set via accessors", name)
 		}
 	}
 }
