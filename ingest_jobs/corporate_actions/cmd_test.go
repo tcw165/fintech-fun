@@ -129,7 +129,15 @@ func TestHelpRoot(t *testing.T) {
 	if !strings.Contains(got.out, "--dry-run") || !strings.Contains(got.out, "--file") {
 		t.Fatalf("help:\n%s", got.out)
 	}
-	if strings.Contains(got.out, "  parse") {
-		t.Fatalf("dropped toolkit command still listed:\n%s", got.out)
+	for _, name := range []string{
+		"refresh",
+		"ping",
+		"seed",
+		"verify",
+		"parse",
+	} {
+		if strings.Contains(got.out, "  "+name+" ") {
+			t.Fatalf("subcommand %s still listed:\n%s", name, got.out)
+		}
 	}
 }
