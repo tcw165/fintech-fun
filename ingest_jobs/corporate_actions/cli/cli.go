@@ -3,6 +3,7 @@ package cli
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/tcw165/fintech-fun/ingest_jobs/corporate_actions/request"
@@ -43,18 +44,74 @@ func New(run Run) *cobra.Command {
 
 func tools() []tool_spec {
 	return []tool_spec{
-		{"parse", "parse", "Parse a saved tracker page", flags_file_required},
-		{"classify", "classify", "Classify one headline", flags_classify},
-		{"plan", "plan", "Plan ingest writes from a saved page", flags_file_required},
-		{"fetch", "fetch", "Fetch the live tracker page", flags_fetch},
-		{"gold", "gold", "Classify gold report from a file or live fetch", flags_file_optional},
-		{"ingest", "ingest", "Prefix-dedup ingest via the custom agent", flags_ingest},
-		{"verify", "verify", "Verify memory gold and optional Bolt gold", nil},
-		{"search", "search", "Search Event headlines in Qdrant", flags_search},
-		{"refresh", "refresh", "Live prefix-dedup ingest plus waiting-policy metadata", nil},
-		{"ping", "ping", "Write NFLX fixture and read it back", nil},
-		{"seed", "seed", "Seed Notion fixtures into Neo4j and Qdrant", nil},
-		{"fold", "fold", "Fold what a holder has now", flags_fold},
+		{
+			name:  "parse",
+			use:   "parse",
+			short: "Parse a saved tracker page",
+			flags: flags_file_required,
+		},
+		{
+			name:  "classify",
+			use:   "classify",
+			short: "Classify one headline",
+			flags: flags_classify,
+		},
+		{
+			name:  "plan",
+			use:   "plan",
+			short: "Plan ingest writes from a saved page",
+			flags: flags_file_required,
+		},
+		{
+			name:  "fetch",
+			use:   "fetch",
+			short: "Fetch the live tracker page",
+			flags: flags_fetch,
+		},
+		{
+			name:  "gold",
+			use:   "gold",
+			short: "Classify gold report from a file or live fetch",
+			flags: flags_file_optional,
+		},
+		{
+			name:  "ingest",
+			use:   "ingest",
+			short: "Prefix-dedup ingest via the custom agent",
+			flags: flags_ingest,
+		},
+		{
+			name:  "verify",
+			use:   "verify",
+			short: "Verify memory gold and optional Bolt gold",
+		},
+		{
+			name:  "search",
+			use:   "search",
+			short: "Search Event headlines in Qdrant",
+			flags: flags_search,
+		},
+		{
+			name:  "refresh",
+			use:   "refresh",
+			short: "Live prefix-dedup ingest plus waiting-policy metadata",
+		},
+		{
+			name:  "ping",
+			use:   "ping",
+			short: "Write NFLX fixture and read it back",
+		},
+		{
+			name:  "seed",
+			use:   "seed",
+			short: "Seed Notion fixtures into Neo4j and Qdrant",
+		},
+		{
+			name:  "fold",
+			use:   "fold",
+			short: "Fold what a holder has now",
+			flags: flags_fold,
+		},
 	}
 }
 
@@ -81,25 +138,50 @@ func new_tool_cmd(spec tool_spec, run Run) *cobra.Command {
 }
 
 func flags_file_required(cmd *cobra.Command) {
-	cmd.Flags().StringP("file", "f", "", "tracker page file")
+	cmd.Flags().StringP(
+		"file",
+		"f",
+		"",
+		"tracker page file",
+	)
 	_ = cmd.MarkFlagRequired("file")
 }
 
 func flags_file_optional(cmd *cobra.Command) {
-	cmd.Flags().StringP("file", "f", "", "tracker page file")
+	cmd.Flags().StringP(
+		"file",
+		"f",
+		"",
+		"tracker page file",
+	)
 }
 
 func flags_ingest(cmd *cobra.Command) {
-	cmd.Flags().StringP("file", "f", "", "tracker page file")
+	cmd.Flags().StringP(
+		"file",
+		"f",
+		"",
+		"tracker page file",
+	)
 	cmd.Flags().Bool("dry-run", false, "plan writes without touching Neo4j or Qdrant")
 }
 
 func flags_fetch(cmd *cobra.Command) {
-	cmd.Flags().StringP("out", "o", "", "write tracker page to this path")
+	cmd.Flags().StringP(
+		"out",
+		"o",
+		"",
+		"write tracker page to this path",
+	)
 }
 
 func flags_search(cmd *cobra.Command) {
-	cmd.Flags().StringP("query", "q", "", "headline search query")
+	cmd.Flags().StringP(
+		"query",
+		"q",
+		"",
+		"headline search query",
+	)
 	cmd.Flags().IntP("limit", "n", 5, "max hits")
 	_ = cmd.MarkFlagRequired("query")
 }
@@ -118,6 +200,10 @@ func flags_classify(cmd *cobra.Command) {
 	cmd.Flags().String("ticker", "", "ticker")
 	_ = cmd.MarkFlagRequired("date")
 	_ = cmd.MarkFlagRequired("headline")
+}
+
+func collapse_ws(value string) string {
+	return strings.Join(strings.Fields(value), " ")
 }
 
 func read_request(cmd *cobra.Command, name string) (request.Request, error) {
@@ -140,6 +226,7 @@ func read_request(cmd *cobra.Command, name string) (request.Request, error) {
 		if err != nil {
 			return req, err
 		}
+		req.Query = collapse_ws(req.Query)
 	}
 	if cmd.Flags().Lookup("limit") != nil {
 		req.Limit, err = cmd.Flags().GetInt("limit")
@@ -164,6 +251,7 @@ func read_request(cmd *cobra.Command, name string) (request.Request, error) {
 		if err != nil {
 			return req, err
 		}
+		req.Q = collapse_ws(req.Q)
 	}
 	if cmd.Flags().Lookup("date") != nil {
 		req.Date, err = cmd.Flags().GetString("date")
@@ -176,6 +264,7 @@ func read_request(cmd *cobra.Command, name string) (request.Request, error) {
 		if err != nil {
 			return req, err
 		}
+		req.Headline = collapse_ws(req.Headline)
 	}
 	if cmd.Flags().Lookup("company") != nil {
 		req.Company, err = cmd.Flags().GetString("company")

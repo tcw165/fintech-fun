@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/agent"
+	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/classify"
 	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/ingest"
 	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/parser"
 	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions/testdata"
@@ -119,13 +120,60 @@ func TestRefreshRequiresClients(t *testing.T) {
 
 func TestSearchUsesInjectedQdrant(t *testing.T) {
 	vector_db := &qdrantimpl.Recording{}
-	payload, err := Run(Deps{VectorsClient: vector_db, Embedder: lexical.New()}, request.Request{Name: "search", Query: "LivePerson stock merger"})
+	payload, err := Run(
+		Deps{VectorsClient: vector_db, Embedder: lexical.New()},
+		request.Request{
+			Name:  "search",
+			Query: "LivePerson stock merger",
+		},
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
 	out := payload.(map[string]any)
 	if out["query"] != "LivePerson stock merger" {
 		t.Fatalf("%v", out)
+	}
+}
+
+func TestSearchCollapsesMultilineQuery(t *testing.T) {
+	vector_db := &qdrantimpl.Recording{}
+	payload, err := Run(
+		Deps{VectorsClient: vector_db, Embedder: lexical.New()},
+		request.Request{
+			Name:  "search",
+			Query: "LivePerson\nstock\nmerger",
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	out := payload.(map[string]any)
+	if out["query"] != "LivePerson stock merger" {
+		t.Fatalf("%v", out)
+	}
+}
+
+func TestClassifyMultilineHeadline(t *testing.T) {
+	payload, err := Run(
+		Deps{},
+		request.Request{
+			Name:     "classify",
+			Date:     "2026-09-04",
+			Headline: "LivePerson (LPSN) performed a stock merger.\nShareholders will receive 0.4673 new shares of SOUN for each old share of LPSN previously held.",
+			Company:  "LivePerson",
+			Ticker:   "LPSN",
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	result := payload.(classify.ClassifyResult)
+	if result.Status != "success" || len(result.Events) != 1 {
+		t.Fatalf("%+v", result)
+	}
+	if result.Events[0].Kind != "now_different_stock" || result.Events[0].ShareMultiplier != 0.4673 || result.Events[0].YouNowHold != "SOUN" {
+		t.Fatalf("%+v", result.Events[0])
 	}
 }
 
