@@ -21,6 +21,6 @@ go_binary(
 
 go_test(
     name = "cmd_test",
-    srcs = ["cmd_test.go"],
+    srcs = ["main_test.go"],
     embed = [":cmd_lib"],
 )
