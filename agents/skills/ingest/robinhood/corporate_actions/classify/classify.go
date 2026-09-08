@@ -109,7 +109,8 @@ func apply_share_exchange(base *hood_events.ClassifiedEvent, headline string) {
 }
 
 func ClassifyRow(row hood_events.TrackerRow) []hood_events.ClassifiedEvent {
-	headline := row.Headline
+	headline := strings.Join(strings.Fields(row.Headline), " ")
+	row.Headline = headline
 	lower := strings.ToLower(headline)
 	if strings.Contains(lower, "cusip change") && !strings.Contains(lower, "ticker") && !strings.Contains(lower, "split") && !strings.Contains(lower, "name") {
 		return []hood_events.ClassifiedEvent{skip_event(row, "")}

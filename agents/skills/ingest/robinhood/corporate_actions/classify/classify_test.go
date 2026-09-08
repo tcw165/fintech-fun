@@ -1,6 +1,7 @@
 package classify
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/tcw165/fintech-fun/agents/skills/ingest/robinhood/corporate_actions"
@@ -200,6 +201,32 @@ func TestGoldReportCountsSkips(t *testing.T) {
 func TestClassifyHeadline(t *testing.T) {
 	result, err := ClassifyHeadline(
 		"Apogee Therapeutics, Inc. (APGE) performed a cash merger. Shareholders will receive $135.11 per share in cash.",
+		"2026-09-03",
+		"Apogee Therapeutics, Inc.",
+		"APGE",
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Events[0].Kind != "cashed_out" || result.Events[0].CashPerShare != 135.11 {
+		t.Fatalf("%+v", result)
+	}
+}
+
+func TestClassifyMultilineHeadline(t *testing.T) {
+	events := ClassifyRow(row(
+		"LivePerson (LPSN) performed a stock merger.\nShareholders will receive 0.4673 new shares of SOUN\nfor each old share of LPSN previously held.",
+		"LPSN",
+		"LivePerson",
+	))
+	if len(events) != 1 || events[0].Kind != "now_different_stock" || events[0].ShareMultiplier != 0.4673 || events[0].YouNowHold != "SOUN" {
+		t.Fatalf("%+v", events)
+	}
+	if strings.Contains(events[0].Headline, "\n") {
+		t.Fatalf("headline should collapse newlines: %q", events[0].Headline)
+	}
+	result, err := ClassifyHeadline(
+		"Apogee Therapeutics, Inc. (APGE) performed a cash merger.\nThis means that shares were removed and shareholders will receive $135.11 per share in cash.",
 		"2026-09-03",
 		"Apogee Therapeutics, Inc.",
 		"APGE",
