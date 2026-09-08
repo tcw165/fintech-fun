@@ -12,7 +12,7 @@ import (
 	"github.com/tcw165/fintech-fun/graph/embed"
 	"github.com/tcw165/fintech-fun/graph/examples"
 	"github.com/tcw165/fintech-fun/graph/fold"
-	"github.com/tcw165/fintech-fun/ingest_jobs/corporate_actions/request"
+	"github.com/tcw165/fintech-fun/ingest_jobs/corporate_actions/cli_params"
 )
 
 type Deps struct {
@@ -22,7 +22,7 @@ type Deps struct {
 	Agent         *agent.Agent
 }
 
-func Run(deps Deps, req request.Request) (any, error) {
+func Run(deps Deps, req cli_params.Request) (any, error) {
 	if req.Name == "" {
 		req.Name = "ingest"
 	}
@@ -42,7 +42,7 @@ func Run(deps Deps, req request.Request) (any, error) {
 	}
 }
 
-func run_ingest(deps Deps, req request.Request) (any, error) {
+func run_ingest(deps Deps, req cli_params.Request) (any, error) {
 	ingest_agent := deps.Agent
 	if ingest_agent == nil {
 		ingest_agent = agent.New(
@@ -76,7 +76,7 @@ func run_ingest(deps Deps, req request.Request) (any, error) {
 	return result.Payload(), nil
 }
 
-func run_dry_run(ingest_agent *agent.Agent, req request.Request) (any, error) {
+func run_dry_run(ingest_agent *agent.Agent, req cli_params.Request) (any, error) {
 	if req.File != "" {
 		data, err := os.ReadFile(req.File)
 		if err != nil {
