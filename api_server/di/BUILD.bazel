@@ -5,7 +5,7 @@ go_library(
     name = "di",
     srcs = [
         "context.go",
-        "fx.go",
+        "module.go",
         "wire.go",
     ],
     importpath = "github.com/tcw165/fintech-fun/api_server/di",
