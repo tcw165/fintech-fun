@@ -11,6 +11,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tcw165/fintech-fun/api_server/di"
+	"github.com/tcw165/fintech-fun/version"
 	"go.uber.org/fx"
 )
 
@@ -29,6 +30,7 @@ func cmd(listen func(addr string) error) *cobra.Command {
 		Use:           "api_server",
 		Short:         "Retail graph HTTP surface",
 		Long:          "Serve /healthz, /fold, /search, and /v1/graph. No args starts the server so the k8s Deployment stays unchanged.",
+		Version:       version.Version,
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		Args:          cobra.NoArgs,

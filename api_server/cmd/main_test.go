@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"strings"
 	"testing"
 )
 
@@ -55,5 +57,23 @@ func TestUnknownCommand(t *testing.T) {
 	unknown.SetArgs([]string{"nope"})
 	if err := unknown.Execute(); err == nil {
 		t.Fatal("expected unknown command")
+	}
+}
+
+func TestVersion(t *testing.T) {
+	root := cmd(func(string) error {
+		t.Fatal("version must not listen")
+		return nil
+	})
+	var buf bytes.Buffer
+	root.SetOut(&buf)
+	root.SetErr(&buf)
+	root.SetArgs([]string{"--version"})
+	if err := root.Execute(); err != nil {
+		t.Fatalf("version: %v", err)
+	}
+	got := buf.String()
+	if !strings.Contains(got, "api_server version 0.1.0") {
+		t.Fatalf("version:\n%s", got)
 	}
 }
