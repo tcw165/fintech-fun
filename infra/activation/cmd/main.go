@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tcw165/fintech-fun/infra/activation/contract"
 	"github.com/tcw165/fintech-fun/infra/activation/impl"
+	"github.com/tcw165/fintech-fun/version"
 )
 
 func main() {
@@ -24,6 +25,7 @@ func cmd(checker contract.Checker, stdout io.Writer) *cobra.Command {
 		Use:           "activation",
 		Short:         "Gap A HTTP proofs against api_server",
 		Long:          "Run healthz, smoke, gold, or prove checks against an api_server base URL.",
+		Version:       version.Version,
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}

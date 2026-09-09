@@ -9,6 +9,7 @@ go_library(
     deps = [
         "//infra/activation/contract",
         "//infra/activation/impl",
+        "//version",
         "@com_github_spf13_cobra//:cobra",
     ],
 )

@@ -133,3 +133,22 @@ func TestExtraArgsRejected(t *testing.T) {
 		t.Fatal("expected extra arg rejection")
 	}
 }
+
+func TestVersion(t *testing.T) {
+	stdout := &bytes.Buffer{}
+	cli := cmd(&stub_checker{}, stdout)
+	var buf bytes.Buffer
+	cli.SetOut(&buf)
+	cli.SetErr(&buf)
+	cli.SetArgs([]string{"--version"})
+	if err := cli.Execute(); err != nil {
+		t.Fatalf("version: %v", err)
+	}
+	got := buf.String()
+	if !strings.Contains(got, "activation version 0.1.0") {
+		t.Fatalf("version:\n%s", got)
+	}
+	if stdout.Len() != 0 {
+		t.Fatalf("proof stdout=%s", stdout.String())
+	}
+}
