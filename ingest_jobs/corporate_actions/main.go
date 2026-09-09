@@ -13,6 +13,7 @@ import (
 	"github.com/tcw165/fintech-fun/ingest_jobs/corporate_actions/cli_params"
 	"github.com/tcw165/fintech-fun/ingest_jobs/corporate_actions/tools"
 	"github.com/tcw165/fintech-fun/ingest_jobs/di"
+	"github.com/tcw165/fintech-fun/version"
 )
 
 type exit_error struct {
@@ -63,6 +64,7 @@ func cmd(run run_func) *cobra.Command {
 		Use:           "corporate_actions",
 		Short:         "Robinhood corporate-actions ingest",
 		Long:          "Fetch or read a tracker page, classify headlines, and ingest. --dry-run runs the same path without writing to Neo4j or Qdrant.",
+		Version:       version.Version,
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		Args:          cobra.NoArgs,

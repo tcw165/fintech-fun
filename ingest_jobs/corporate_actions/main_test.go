@@ -123,3 +123,16 @@ func TestHelpRoot(t *testing.T) {
 		t.Fatalf("named tool still in usage:\n%s", got.out)
 	}
 }
+
+func TestVersion(t *testing.T) {
+	got := execute_cli(t, "--version")
+	if got.err != nil {
+		t.Fatalf("version: %v", got.err)
+	}
+	if got.called {
+		t.Fatal("version must not run ingest")
+	}
+	if !strings.Contains(got.out, "corporate_actions version 0.1.0") {
+		t.Fatalf("version:\n%s", got.out)
+	}
+}
